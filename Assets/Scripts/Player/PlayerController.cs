@@ -32,7 +32,7 @@ namespace Tribulation.Player
             if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) input.x -= 1f;
 
             input = Vector2.ClampMagnitude(input, 1f);
-            moveDirection = new Vector3(input.x, 0f, input.y);
+            moveDirection = GetCameraRelativeDirection(input);
 
             if (moveDirection.sqrMagnitude > 0.01f)
             {
@@ -43,6 +43,25 @@ namespace Tribulation.Player
         private void FixedUpdate()
         {
             body.linearVelocity = moveDirection * stats.MoveSpeed;
+        }
+
+        private static Vector3 GetCameraRelativeDirection(Vector2 input)
+        {
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return new Vector3(input.x, 0f, input.y);
+            }
+
+            var forward = camera.transform.forward;
+            forward.y = 0f;
+            forward.Normalize();
+
+            var right = camera.transform.right;
+            right.y = 0f;
+            right.Normalize();
+
+            return right * input.x + forward * input.y;
         }
     }
 }

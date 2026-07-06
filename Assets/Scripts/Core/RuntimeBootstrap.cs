@@ -43,6 +43,7 @@ namespace Tribulation.Core
 
             var body = player.AddComponent<Rigidbody>();
             body.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
             body.useGravity = false;
 
             var stats = player.AddComponent<PlayerStats>();
@@ -62,10 +63,13 @@ namespace Tribulation.Core
                 cameraObject.AddComponent<AudioListener>();
             }
 
+            const float fieldOfView = 35f;
+            const float orbitDistance = 35f;
+
             camera.transform.position = new Vector3(0f, 18f, -13f);
             camera.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
-            camera.orthographic = true;
-            camera.orthographicSize = 10f;
+            camera.orthographic = false;
+            camera.fieldOfView = fieldOfView;
 
             var follow = camera.GetComponent<CameraFollow>();
             if (follow == null)
@@ -74,6 +78,10 @@ namespace Tribulation.Core
             }
 
             follow.Target = target;
+            follow.Distance = orbitDistance;
+            follow.Yaw = 0f;
+            follow.Pitch = 45f;
+            follow.MouseSensitivity = 0.22f;
         }
 
         private static void EnsureGround()
