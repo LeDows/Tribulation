@@ -1,2 +1,17 @@
-# Tribulation
- Survive the Heavens. Ascend Beyond
+# 渡劫录 / Tribulation
+
+Unity 6 修仙题材弹幕生存 Roguelike 原型。
+
+## 当前原型
+
+- 打开 `Assets/Scenes/Start.unity` 后直接 Play。
+- 运行时会自动生成玩家、地面、摄像机、刷怪器和原型 HUD。
+- WASD / 方向键移动，飞剑会自动攻击最近敌人。
+- 击杀敌人掉落灵气球，拾取后升级并提升生命、速度和伤害。
+- 死亡后按 `R` 重开。
+
+## 设计文档
+
+- `渡劫录_GDD_完整版_v1.0.md`
+- `渡劫录_Steam单机版差异化策略.md`
+- `渡劫录_30天独立开发计划.md`
