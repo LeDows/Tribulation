@@ -1,4 +1,5 @@
 using Tribulation.Core;
+using Tribulation.Config;
 using UnityEngine;
 
 namespace Tribulation.Enemies
@@ -9,8 +10,18 @@ namespace Tribulation.Enemies
         public float MoveSpeed = 3.1f;
         public float ContactDamage = 8f;
         public float AttackInterval = 0.75f;
+        public float AttackRange = 1.35f;
 
         private float attackCooldown;
+
+        public void Configure(EnemyConfig config)
+        {
+            MoveSpeed = Random.Range(config.minMoveSpeed, config.maxMoveSpeed) +
+                GameManager.Instance.RunTime / Mathf.Max(0.01f, config.speedDifficultySeconds);
+            ContactDamage = config.contactDamage;
+            AttackInterval = config.attackInterval;
+            AttackRange = config.attackRange;
+        }
 
         private void Update()
         {
@@ -30,7 +41,7 @@ namespace Tribulation.Enemies
             }
 
             attackCooldown -= Time.deltaTime;
-            if (toPlayer.sqrMagnitude <= 1.35f * 1.35f && attackCooldown <= 0f)
+            if (toPlayer.sqrMagnitude <= AttackRange * AttackRange && attackCooldown <= 0f)
             {
                 player.TakeDamage(ContactDamage);
                 attackCooldown = AttackInterval;

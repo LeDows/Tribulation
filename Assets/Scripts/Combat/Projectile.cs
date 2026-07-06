@@ -10,11 +10,12 @@ namespace Tribulation.Combat
         private float speed;
         private float lifeTime = 2.2f;
 
-        public void Launch(Vector3 travelDirection, float hitDamage, float travelSpeed)
+        public void Launch(Vector3 travelDirection, float hitDamage, float travelSpeed, float duration)
         {
             direction = travelDirection.normalized;
             damage = hitDamage;
             speed = travelSpeed;
+            lifeTime = duration;
         }
 
         private void Update()

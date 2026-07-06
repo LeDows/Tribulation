@@ -1,4 +1,5 @@
 using Tribulation.Core;
+using Tribulation.Config;
 using UnityEngine;
 
 namespace Tribulation.Enemies
@@ -6,10 +7,28 @@ namespace Tribulation.Enemies
     public sealed class WaveSpawner : MonoBehaviour
     {
         public float SpawnInterval = 1.25f;
+        public float MinimumSpawnInterval = 0.28f;
+        public float PressureRampSeconds = 180f;
         public float SpawnRadius = 16f;
         public int MaxEnemies = 90;
 
         private float timer;
+        private string enemyId = "hungry_spirit";
+
+        public void Configure(SpawnConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            enemyId = config.enemyId;
+            SpawnInterval = config.interval;
+            MinimumSpawnInterval = config.minimumInterval;
+            PressureRampSeconds = config.pressureRampSeconds;
+            SpawnRadius = config.radius;
+            MaxEnemies = config.maxEnemies;
+        }
 
         private void Update()
         {
@@ -30,31 +49,38 @@ namespace Tribulation.Enemies
                 SpawnEnemy();
             }
 
-            var pressure = Mathf.Clamp01(GameManager.Instance.RunTime / 180f);
-            timer = Mathf.Lerp(SpawnInterval, 0.28f, pressure);
+            var pressure = Mathf.Clamp01(GameManager.Instance.RunTime / Mathf.Max(0.01f, PressureRampSeconds));
+            timer = Mathf.Lerp(SpawnInterval, MinimumSpawnInterval, pressure);
         }
 
         private void SpawnEnemy()
         {
+            var enemy = GameConfigService.Config.GetEnemy(enemyId);
             var playerPosition = GameManager.Instance.Player.transform.position;
             var angle = Random.Range(0f, Mathf.PI * 2f);
             var position = playerPosition + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * SpawnRadius;
             position.y = 1f;
 
-            var enemyObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            enemyObject.name = "Hungry Spirit";
+            var enemyObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Enemy, GameManager.Instance.RunRoot);
+            enemyObject.name = enemy.displayName;
             enemyObject.transform.position = position;
-            enemyObject.GetComponent<Renderer>().material.color = new Color(0.75f, 0.16f, 0.22f);
+            if (enemyObject.TryGetComponent<Renderer>(out var renderer))
+            {
+                renderer.material.color = enemy.color;
+            }
 
-            var collider = enemyObject.GetComponent<CapsuleCollider>();
-            collider.radius = 0.45f;
+            if (enemyObject.TryGetComponent<CapsuleCollider>(out var collider))
+            {
+                collider.radius = enemy.colliderRadius;
+            }
 
-            var health = enemyObject.AddComponent<EnemyHealth>();
-            var difficulty = 1f + GameManager.Instance.RunTime / 90f;
-            health.Configure(30f * difficulty, Random.value < 0.15f ? 2 : 1);
+            var health = enemyObject.GetComponent<EnemyHealth>();
+            var difficulty = 1f + GameManager.Instance.RunTime / Mathf.Max(0.01f, enemy.healthDifficultySeconds);
+            var experience = Random.value < enemy.eliteChance ? enemy.eliteExperienceValue : enemy.experienceValue;
+            health.Configure(enemy.maxHealth * difficulty, experience);
 
-            var controller = enemyObject.AddComponent<EnemyController>();
-            controller.MoveSpeed = Random.Range(2.6f, 3.8f) + GameManager.Instance.RunTime / 240f;
+            var controller = enemyObject.GetComponent<EnemyController>();
+            controller.Configure(enemy);
         }
     }
 }

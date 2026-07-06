@@ -1,3 +1,4 @@
+using Tribulation.Config;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,6 +17,20 @@ namespace Tribulation.Core
 
         private float targetYaw;
         private float targetPitch;
+
+        public void Configure(Transform target, CameraConfig config)
+        {
+            Target = target;
+            Distance = config.orbitDistance;
+            Yaw = config.yaw;
+            Pitch = config.pitch;
+            MouseSensitivity = config.mouseSensitivity;
+            PositionSharpness = config.positionSharpness;
+            RotationSharpness = config.rotationSharpness;
+            PitchLimits = config.pitchLimits;
+            targetYaw = Yaw;
+            targetPitch = Pitch;
+        }
 
         private void OnEnable()
         {

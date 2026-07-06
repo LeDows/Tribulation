@@ -1,4 +1,5 @@
 using Tribulation.Core;
+using Tribulation.Config;
 using UnityEngine;
 
 namespace Tribulation.Player
@@ -13,14 +14,36 @@ namespace Tribulation.Player
         public float Health { get; private set; }
         public float DamageMultiplier { get; private set; } = 1f;
 
+        private LevelConfig levelConfig = LevelConfig.CreateDefault();
+        private bool configured;
+
         private void Awake()
         {
+            if (!configured)
+            {
+                Configure(GameConfigService.Config.GetSelectedCharacter(), GameConfigService.Config.level);
+            }
+
             Health = MaxHealth;
         }
 
         private void Start()
         {
             GameManager.Instance.RegisterPlayer(this);
+        }
+
+        public void Configure(CharacterConfig character, LevelConfig level)
+        {
+            character ??= CharacterConfig.CreateDefault();
+            levelConfig = level ?? LevelConfig.CreateDefault();
+            Level = levelConfig.startLevel;
+            Experience = 0;
+            ExperienceToNextLevel = levelConfig.firstLevelExperience;
+            MoveSpeed = character.moveSpeed;
+            MaxHealth = character.maxHealth;
+            Health = MaxHealth;
+            DamageMultiplier = character.damageMultiplier;
+            configured = true;
         }
 
         public void AddExperience(int amount)
@@ -51,11 +74,12 @@ namespace Tribulation.Player
         private void LevelUp()
         {
             Level++;
-            ExperienceToNextLevel = Mathf.CeilToInt(ExperienceToNextLevel * 1.24f + 2f);
-            MaxHealth += 12f;
-            Health = Mathf.Min(MaxHealth, Health + 28f);
-            MoveSpeed += 0.12f;
-            DamageMultiplier += 0.08f;
+            ExperienceToNextLevel = Mathf.CeilToInt(
+                ExperienceToNextLevel * levelConfig.experienceGrowthMultiplier + levelConfig.experienceGrowthFlat);
+            MaxHealth += levelConfig.maxHealthPerLevel;
+            Health = Mathf.Min(MaxHealth, Health + levelConfig.healOnLevelUp);
+            MoveSpeed += levelConfig.moveSpeedPerLevel;
+            DamageMultiplier += levelConfig.damageMultiplierPerLevel;
         }
     }
 }

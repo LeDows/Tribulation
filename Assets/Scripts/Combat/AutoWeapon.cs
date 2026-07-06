@@ -1,4 +1,6 @@
 using Tribulation.Enemies;
+using Tribulation.Config;
+using Tribulation.Core;
 using Tribulation.Player;
 using UnityEngine;
 
@@ -11,6 +13,10 @@ namespace Tribulation.Combat
         public float Range = 14f;
         public float BaseDamage = 18f;
         public float ProjectileSpeed = 18f;
+        public float ProjectileLifetime = 2.2f;
+        public float ProjectileScale = 0.28f;
+        public string ProjectileName = "Flying Sword";
+        public Color ProjectileColor = new(0.8f, 0.95f, 1f, 1f);
 
         private PlayerStats stats;
         private float cooldown;
@@ -18,6 +24,19 @@ namespace Tribulation.Combat
         private void Awake()
         {
             stats = GetComponent<PlayerStats>();
+            ApplyConfig(GameConfigService.Config.weapon);
+        }
+
+        private void ApplyConfig(WeaponConfig config)
+        {
+            FireInterval = config.fireInterval;
+            Range = config.range;
+            BaseDamage = config.baseDamage;
+            ProjectileSpeed = config.projectileSpeed;
+            ProjectileLifetime = config.projectileLifetime;
+            ProjectileScale = config.projectileScale;
+            ProjectileName = config.projectileName;
+            ProjectileColor = config.projectileColor;
         }
 
         private void Update()
@@ -59,21 +78,21 @@ namespace Tribulation.Combat
 
         private void FireAt(Vector3 targetPosition)
         {
-            var projectileObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            projectileObject.name = "Flying Sword";
+            var projectileObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Projectile, GameManager.Instance.RunRoot);
+            projectileObject.name = ProjectileName;
             projectileObject.transform.position = transform.position + Vector3.up * 0.7f;
-            projectileObject.transform.localScale = Vector3.one * 0.28f;
-            projectileObject.GetComponent<Renderer>().material.color = new Color(0.8f, 0.95f, 1f);
+            projectileObject.transform.localScale = Vector3.one * ProjectileScale;
+            if (projectileObject.TryGetComponent<Renderer>(out var renderer))
+            {
+                renderer.material.color = ProjectileColor;
+            }
 
-            var collider = projectileObject.GetComponent<SphereCollider>();
-            collider.isTrigger = true;
-
-            var body = projectileObject.AddComponent<Rigidbody>();
-            body.isKinematic = true;
-            body.useGravity = false;
-
-            var projectile = projectileObject.AddComponent<Projectile>();
-            projectile.Launch(targetPosition - transform.position, BaseDamage * stats.DamageMultiplier, ProjectileSpeed);
+            var projectile = projectileObject.GetComponent<Projectile>();
+            projectile.Launch(
+                targetPosition - transform.position,
+                BaseDamage * stats.DamageMultiplier,
+                ProjectileSpeed,
+                ProjectileLifetime);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Tribulation.Core;
+using Tribulation.Config;
 using Tribulation.Player;
 using UnityEngine;
 
@@ -12,17 +13,21 @@ namespace Tribulation.Pickups
 
         public static void Spawn(Vector3 position, int value)
         {
-            var orbObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            orbObject.name = "Spirit Qi";
+            var config = GameConfigService.Config.pickup;
+            var parent = GameManager.Instance != null ? GameManager.Instance.RunRoot : null;
+            var orbObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.ExperienceOrb, parent);
+            orbObject.name = config.experienceOrbName;
             orbObject.transform.position = position + Vector3.up * 0.3f;
-            orbObject.transform.localScale = Vector3.one * 0.35f;
-            orbObject.GetComponent<Renderer>().material.color = new Color(0.35f, 1f, 0.7f);
+            orbObject.transform.localScale = Vector3.one * config.scale;
+            if (orbObject.TryGetComponent<Renderer>(out var renderer))
+            {
+                renderer.material.color = config.color;
+            }
 
-            var collider = orbObject.GetComponent<SphereCollider>();
-            collider.isTrigger = true;
-
-            var orb = orbObject.AddComponent<ExperienceOrb>();
+            var orb = orbObject.GetComponent<ExperienceOrb>();
             orb.Value = value;
+            orb.MagnetRadius = config.magnetRadius;
+            orb.MoveSpeed = config.moveSpeed;
         }
 
         private void Update()
