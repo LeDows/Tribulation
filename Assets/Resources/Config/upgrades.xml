@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<upgrades>
+  <upgrade id="spirit_power" titleKey="upgrade.spirit_power.title" descriptionKey="upgrade.damage_multiplier.description" effectType="damage_multiplier" value="0.1" />
+  <upgrade id="iron_body" titleKey="upgrade.iron_body.title" descriptionKey="upgrade.max_health.description" effectType="max_health" value="20" />
+  <upgrade id="cloud_step" titleKey="upgrade.cloud_step.title" descriptionKey="upgrade.move_speed.description" effectType="move_speed" value="0.35" />
+  <upgrade id="sharpened_sword" titleKey="upgrade.sharpened_sword.title" descriptionKey="upgrade.weapon_damage.description" effectType="weapon_damage" value="6" />
+  <upgrade id="quickened_blade" titleKey="upgrade.quickened_blade.title" descriptionKey="upgrade.weapon_fire_rate.description" effectType="weapon_fire_rate" value="0.12" />
+</upgrades>

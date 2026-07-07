@@ -21,7 +21,7 @@ namespace Tribulation.Player
         {
             if (!configured)
             {
-                Configure(GameConfigService.Config.GetSelectedCharacter(), GameConfigService.Config.level);
+                Configure(ConfigCenter.GetSelectedCharacter(), ConfigCenter.Level);
             }
 
             Health = MaxHealth;
@@ -76,10 +76,33 @@ namespace Tribulation.Player
             Level++;
             ExperienceToNextLevel = Mathf.CeilToInt(
                 ExperienceToNextLevel * levelConfig.experienceGrowthMultiplier + levelConfig.experienceGrowthFlat);
-            MaxHealth += levelConfig.maxHealthPerLevel;
-            Health = Mathf.Min(MaxHealth, Health + levelConfig.healOnLevelUp);
-            MoveSpeed += levelConfig.moveSpeedPerLevel;
-            DamageMultiplier += levelConfig.damageMultiplierPerLevel;
+            GameManager.Instance.RequestLevelUpSelection();
+        }
+
+        public void IncreaseMaxHealth(float amount, bool healByAmount)
+        {
+            MaxHealth += amount;
+            if (healByAmount)
+            {
+                Heal(amount);
+            }
+
+            Health = Mathf.Min(Health, MaxHealth);
+        }
+
+        public void Heal(float amount)
+        {
+            Health = Mathf.Min(MaxHealth, Health + amount);
+        }
+
+        public void AddMoveSpeed(float amount)
+        {
+            MoveSpeed += amount;
+        }
+
+        public void AddDamageMultiplier(float amount)
+        {
+            DamageMultiplier += amount;
         }
     }
 }

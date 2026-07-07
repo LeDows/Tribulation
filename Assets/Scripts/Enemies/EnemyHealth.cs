@@ -11,6 +11,9 @@ namespace Tribulation.Enemies
 
         private float health;
 
+        public float Health => health;
+        public float HealthFraction => MaxHealth > 0f ? Mathf.Clamp01(health / MaxHealth) : 0f;
+
         private void Awake()
         {
             health = MaxHealth;
@@ -25,7 +28,7 @@ namespace Tribulation.Enemies
 
         public void TakeDamage(float amount)
         {
-            health -= amount;
+            health = Mathf.Max(0f, health - amount);
             if (health > 0f)
             {
                 return;

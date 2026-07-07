@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<maps>
+  <map id="qingyun_plateau" displayNameKey="map.qingyun_plateau.name">
+    <playerSpawn x="0" y="1" z="0" />
+    <groundScale x="6" y="1" z="6" />
+    <groundColor r="0.15" g="0.18" b="0.16" a="1" />
+    <camera>
+      <position x="0" y="18" z="-13" />
+      <rotation x="58" y="0" z="0" />
+      <fieldOfView>35</fieldOfView>
+      <orbitDistance>35</orbitDistance>
+      <yaw>0</yaw>
+      <pitch>45</pitch>
+      <mouseSensitivity>0.22</mouseSensitivity>
+      <positionSharpness>18</positionSharpness>
+      <rotationSharpness>22</rotationSharpness>
+      <pitchLimits x="25" y="75" />
+    </camera>
+    <spawn enemyId="hungry_spirit">
+      <interval>1.25</interval>
+      <minimumInterval>0.28</minimumInterval>
+      <pressureRampSeconds>180</pressureRampSeconds>
+      <radius>16</radius>
+      <maxEnemies>90</maxEnemies>
+    </spawn>
+  </map>
+</maps>

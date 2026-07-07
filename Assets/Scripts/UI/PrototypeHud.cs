@@ -1,4 +1,5 @@
 using Tribulation.Core;
+using Tribulation.Config;
 using UnityEngine;
 
 namespace Tribulation.UI
@@ -20,10 +21,19 @@ namespace Tribulation.UI
             }
 
             GUI.Box(new Rect(18f, 18f, 320f, 132f), GUIContent.none);
-            GUI.Label(new Rect(34f, 28f, 280f, 28f), "Tribulation Prototype", titleStyle);
-            GUI.Label(new Rect(34f, 62f, 280f, 24f), $"Level {player.Level}   Qi {player.Experience}/{player.ExperienceToNextLevel}", labelStyle);
-            GUI.Label(new Rect(34f, 88f, 280f, 24f), $"HP {Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}   Kills {manager.KillCount}", labelStyle);
-            GUI.Label(new Rect(34f, 114f, 280f, 24f), $"Time {Mathf.FloorToInt(manager.RunTime)}s   WASD/Arrow Keys", labelStyle);
+            GUI.Label(new Rect(34f, 28f, 280f, 28f), ConfigCenter.Text("ui.prototype.title"), titleStyle);
+            GUI.Label(
+                new Rect(34f, 62f, 280f, 24f),
+                ConfigCenter.Text("ui.prototype.progress", player.Level, player.Experience, player.ExperienceToNextLevel),
+                labelStyle);
+            GUI.Label(
+                new Rect(34f, 88f, 280f, 24f),
+                ConfigCenter.Text("ui.prototype.vitals", Mathf.CeilToInt(player.Health), Mathf.CeilToInt(player.MaxHealth), manager.KillCount),
+                labelStyle);
+            GUI.Label(
+                new Rect(34f, 114f, 280f, 24f),
+                ConfigCenter.Text("ui.prototype.time_controls", Mathf.FloorToInt(manager.RunTime)),
+                labelStyle);
 
             if (!manager.IsGameOver)
             {
@@ -33,8 +43,8 @@ namespace Tribulation.UI
             var width = Screen.width;
             var height = Screen.height;
             GUI.Box(new Rect(width * 0.5f - 180f, height * 0.5f - 58f, 360f, 116f), GUIContent.none);
-            GUI.Label(new Rect(width * 0.5f - 150f, height * 0.5f - 34f, 300f, 32f), "Run Over", titleStyle);
-            GUI.Label(new Rect(width * 0.5f - 150f, height * 0.5f + 6f, 300f, 28f), "Press R to restart", labelStyle);
+            GUI.Label(new Rect(width * 0.5f - 150f, height * 0.5f - 34f, 300f, 32f), ConfigCenter.Text("ui.result.title"), titleStyle);
+            GUI.Label(new Rect(width * 0.5f - 150f, height * 0.5f + 6f, 300f, 28f), ConfigCenter.Text("ui.prototype.restart_hint"), labelStyle);
         }
 
         private void EnsureStyles()

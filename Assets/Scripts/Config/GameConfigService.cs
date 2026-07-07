@@ -1,38 +1,24 @@
-using UnityEngine;
-
 namespace Tribulation.Config
 {
     public static class GameConfigService
     {
-        private const string ConfigResourcePath = "Config/game_config";
-        private static GameConfig config;
-
-        public static GameConfig Config => config ??= Load();
+        public static GameConfig Config => new()
+        {
+            selectedCharacterId = ConfigCenter.GetSelectedCharacter().id,
+            selectedMapId = ConfigCenter.GetSelectedMap().id,
+            language = ConfigCenter.Language,
+            characters = ConfigCenter.Characters,
+            enemies = ConfigCenter.Enemies,
+            maps = ConfigCenter.Maps,
+            level = ConfigCenter.Level,
+            weapon = ConfigCenter.Weapon,
+            pickup = ConfigCenter.Pickup,
+            upgradeOptions = ConfigCenter.Upgrades
+        };
 
         public static void Reload()
         {
-            config = Load();
-        }
-
-        private static GameConfig Load()
-        {
-            var asset = Resources.Load<TextAsset>(ConfigResourcePath);
-            if (asset == null)
-            {
-                Debug.LogWarning($"Game config not found at Resources/{ConfigResourcePath}. Using code defaults.");
-                return GameConfig.CreateDefault();
-            }
-
-            try
-            {
-                var loaded = JsonUtility.FromJson<GameConfig>(asset.text);
-                return loaded ?? GameConfig.CreateDefault();
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogError($"Failed to parse game config: {exception.Message}");
-                return GameConfig.CreateDefault();
-            }
+            ConfigCenter.Reload();
         }
     }
 }

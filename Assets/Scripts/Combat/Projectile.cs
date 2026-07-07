@@ -13,9 +13,14 @@ namespace Tribulation.Combat
         public void Launch(Vector3 travelDirection, float hitDamage, float travelSpeed, float duration)
         {
             direction = travelDirection.normalized;
-            damage = hitDamage;
+            SetDamage(hitDamage);
             speed = travelSpeed;
             lifeTime = duration;
+        }
+
+        public void SetDamage(float hitDamage)
+        {
+            damage = hitDamage;
         }
 
         private void Update()

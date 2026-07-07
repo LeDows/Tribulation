@@ -55,14 +55,14 @@ namespace Tribulation.Enemies
 
         private void SpawnEnemy()
         {
-            var enemy = GameConfigService.Config.GetEnemy(enemyId);
+            var enemy = ConfigCenter.GetEnemy(enemyId);
             var playerPosition = GameManager.Instance.Player.transform.position;
             var angle = Random.Range(0f, Mathf.PI * 2f);
             var position = playerPosition + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * SpawnRadius;
             position.y = 1f;
 
             var enemyObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Enemy, GameManager.Instance.RunRoot);
-            enemyObject.name = enemy.displayName;
+            enemyObject.name = ConfigCenter.Text(enemy.displayNameKey);
             enemyObject.transform.position = position;
             if (enemyObject.TryGetComponent<Renderer>(out var renderer))
             {
@@ -75,9 +75,8 @@ namespace Tribulation.Enemies
             }
 
             var health = enemyObject.GetComponent<EnemyHealth>();
-            var difficulty = 1f + GameManager.Instance.RunTime / Mathf.Max(0.01f, enemy.healthDifficultySeconds);
             var experience = Random.value < enemy.eliteChance ? enemy.eliteExperienceValue : enemy.experienceValue;
-            health.Configure(enemy.maxHealth * difficulty, experience);
+            health.Configure(enemy.maxHealth, experience);
 
             var controller = enemyObject.GetComponent<EnemyController>();
             controller.Configure(enemy);

@@ -1,4 +1,5 @@
 using Tribulation.Config;
+using Tribulation.Combat;
 using Tribulation.Enemies;
 using Tribulation.Player;
 using Tribulation.UI;
@@ -17,6 +18,7 @@ namespace Tribulation.Core
         public PlayerStats Player { get; private set; }
         public int KillCount { get; private set; }
         public float RunTime { get; private set; }
+        public string LastUpgradeSummary { get; private set; } = string.Empty;
         public bool IsGameOver => State == GameState.GameOver;
         public GameState State { get; private set; } = GameState.MainMenu;
 
@@ -24,6 +26,8 @@ namespace Tribulation.Core
 
         private Transform runRoot;
         private GameUiController ui;
+        private UpgradeOptionConfig[] currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+        private int pendingLevelUpSelections;
 
         private void Awake()
         {
@@ -75,9 +79,11 @@ namespace Tribulation.Core
             State = GameState.Running;
             KillCount = 0;
             RunTime = 0f;
+            LastUpgradeSummary = string.Empty;
+            pendingLevelUpSelections = 0;
+            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
 
-            var config = GameConfigService.Config;
-            var map = config.GetSelectedMap();
+            var map = ConfigCenter.GetSelectedMap();
 
             var runRootObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.RunRoot);
             if (runRootObject == null)
@@ -86,7 +92,7 @@ namespace Tribulation.Core
             }
 
             runRoot = runRootObject.transform;
-            var player = CreatePlayer(config.GetSelectedCharacter(), map);
+            var player = CreatePlayer(ConfigCenter.GetSelectedCharacter(), map);
             CreateGround(map, player.transform);
             CreateCamera(player.transform, map.camera);
             CreateSpawner(map);
@@ -105,6 +111,7 @@ namespace Tribulation.Core
             State = GameState.MainMenu;
             KillCount = 0;
             RunTime = 0f;
+            LastUpgradeSummary = string.Empty;
             Player = null;
             ui?.ShowMainMenu();
         }
@@ -130,10 +137,48 @@ namespace Tribulation.Core
             ui?.ShowResult();
         }
 
+        public void RequestLevelUpSelection()
+        {
+            if (Player == null || IsGameOver)
+            {
+                return;
+            }
+
+            if (State == GameState.LevelUpSelection)
+            {
+                pendingLevelUpSelections++;
+                return;
+            }
+
+            ShowLevelUpSelection();
+        }
+
+        public void ChooseUpgradeOption(int optionIndex)
+        {
+            if (State != GameState.LevelUpSelection || optionIndex < 0 || optionIndex >= currentUpgradeOptions.Length)
+            {
+                return;
+            }
+
+            ApplyUpgradeOption(currentUpgradeOptions[optionIndex]);
+
+            if (pendingLevelUpSelections > 0)
+            {
+                pendingLevelUpSelections--;
+                ShowLevelUpSelection();
+                return;
+            }
+
+            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+            State = GameState.Running;
+            Time.timeScale = 1f;
+            ui?.ShowHud();
+        }
+
         private PlayerStats CreatePlayer(CharacterConfig character, MapConfig map)
         {
             var playerObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Player, runRoot);
-            playerObject.name = character.displayName;
+            playerObject.name = ConfigCenter.Text(character.displayNameKey);
             playerObject.transform.position = map.playerSpawn;
 
             if (playerObject.TryGetComponent<Renderer>(out var renderer))
@@ -142,14 +187,14 @@ namespace Tribulation.Core
             }
 
             var stats = playerObject.GetComponent<PlayerStats>();
-            stats.Configure(character, GameConfigService.Config.level);
+            stats.Configure(character, ConfigCenter.Level);
             RegisterPlayer(stats);
             return stats;
         }
 
         private void CreateGround(MapConfig map, Transform target)
         {
-            var groundRoot = new GameObject($"{map.displayName} (Infinite)");
+            var groundRoot = new GameObject(ConfigCenter.Text("runtime.ground.root_name", ConfigCenter.Text(map.displayNameKey)));
             groundRoot.transform.SetParent(runRoot, false);
             groundRoot.AddComponent<InfiniteGround>().Configure(target, map);
         }
@@ -194,6 +239,126 @@ namespace Tribulation.Core
             }
 
             Player = null;
+            pendingLevelUpSelections = 0;
+            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+        }
+
+        private void ShowLevelUpSelection()
+        {
+            State = GameState.LevelUpSelection;
+            Time.timeScale = 0f;
+            currentUpgradeOptions = PickUpgradeOptions();
+            ui?.ShowLevelUpOptions(currentUpgradeOptions);
+        }
+
+        private UpgradeOptionConfig[] PickUpgradeOptions()
+        {
+            var pool = ConfigCenter.Upgrades;
+            if (pool == null || pool.Length == 0)
+            {
+                pool = UpgradeOptionConfig.CreateDefaults();
+            }
+
+            var count = Mathf.Min(3, pool.Length);
+            var selected = new UpgradeOptionConfig[count];
+            var used = new bool[pool.Length];
+
+            for (var i = 0; i < count; i++)
+            {
+                var index = Random.Range(0, pool.Length);
+                var guard = 0;
+                while (used[index] && guard < pool.Length * 2)
+                {
+                    index = Random.Range(0, pool.Length);
+                    guard++;
+                }
+
+                used[index] = true;
+                selected[i] = pool[index];
+            }
+
+            return selected;
+        }
+
+        private void ApplyUpgradeOption(UpgradeOptionConfig option)
+        {
+            if (option == null || Player == null)
+            {
+                return;
+            }
+
+            var effectType = option.effectType?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(effectType))
+            {
+                effectType = option.id?.Trim().ToLowerInvariant() switch
+                {
+                    "spirit_power" => "damage_multiplier",
+                    "iron_body" => "max_health",
+                    "cloud_step" => "move_speed",
+                    "sharpened_sword" => "weapon_damage",
+                    "quickened_blade" => "weapon_fire_rate",
+                    _ => string.Empty
+                };
+            }
+
+            var weapon = Player.GetComponent<AutoWeapon>();
+            var applied = true;
+
+            switch (effectType)
+            {
+                case "max_health":
+                    Player.IncreaseMaxHealth(option.value, true);
+                    break;
+                case "heal":
+                    Player.Heal(option.value);
+                    break;
+                case "move_speed":
+                    Player.AddMoveSpeed(option.value);
+                    break;
+                case "damage_multiplier":
+                    Player.AddDamageMultiplier(option.value);
+                    RefreshActiveProjectileDamage(weapon);
+                    break;
+                case "weapon_damage":
+                    weapon?.AddBaseDamage(option.value);
+                    RefreshActiveProjectileDamage(weapon);
+                    break;
+                case "weapon_fire_rate":
+                    weapon?.ReduceFireIntervalPercent(option.value);
+                    break;
+                case "weapon_range":
+                    weapon?.AddRange(option.value);
+                    break;
+                case "projectile_speed":
+                    weapon?.AddProjectileSpeed(option.value);
+                    break;
+                case "projectile_scale":
+                    weapon?.AddProjectileScale(option.value);
+                    break;
+                default:
+                    applied = false;
+                    Debug.LogWarning($"Unknown upgrade effect type: {option.effectType}");
+                    break;
+            }
+
+            if (applied)
+            {
+                LastUpgradeSummary = ConfigCenter.Text(option.titleKey);
+                Debug.Log($"Applied upgrade '{option.id}' ({effectType}) value={option.value}.", this);
+            }
+        }
+
+        private void RefreshActiveProjectileDamage(AutoWeapon weapon)
+        {
+            if (weapon == null || runRoot == null)
+            {
+                return;
+            }
+
+            foreach (var projectile in runRoot.GetComponentsInChildren<Projectile>())
+            {
+                projectile.SetDamage(weapon.CurrentDamage);
+            }
         }
 
         private void OnDestroy()

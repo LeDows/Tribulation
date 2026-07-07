@@ -13,10 +13,10 @@ namespace Tribulation.Pickups
 
         public static void Spawn(Vector3 position, int value)
         {
-            var config = GameConfigService.Config.pickup;
+            var config = ConfigCenter.Pickup;
             var parent = GameManager.Instance != null ? GameManager.Instance.RunRoot : null;
             var orbObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.ExperienceOrb, parent);
-            orbObject.name = config.experienceOrbName;
+            orbObject.name = ConfigCenter.Text(config.nameKey);
             orbObject.transform.position = position + Vector3.up * 0.3f;
             orbObject.transform.localScale = Vector3.one * config.scale;
             if (orbObject.TryGetComponent<Renderer>(out var renderer))

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<characters>
+  <character id="sword_cultivator" displayNameKey="character.sword_cultivator.name">
+    <maxHealth>100</maxHealth>
+    <moveSpeed>7</moveSpeed>
+    <damageMultiplier>1</damageMultiplier>
+    <color r="0.2" g="0.75" b="1" a="1" />
+  </character>
+  <character id="body_refiner" displayNameKey="character.body_refiner.name">
+    <maxHealth>135</maxHealth>
+    <moveSpeed>6.2</moveSpeed>
+    <damageMultiplier>0.92</damageMultiplier>
+    <color r="1" g="0.62" b="0.28" a="1" />
+  </character>
+</characters>

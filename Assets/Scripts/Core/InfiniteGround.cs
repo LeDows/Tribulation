@@ -59,7 +59,7 @@ namespace Tribulation.Core
             groundMaterial = new Material(prefabRenderer.sharedMaterial)
             {
                 color = map.groundColor,
-                name = $"{map.displayName} (Runtime)"
+                name = ConfigCenter.Text("runtime.ground.material_name", ConfigCenter.Text(map.displayNameKey))
             };
 
             tiles = new Transform[GridSize * GridSize];

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<weapon nameKey="weapon.flying_sword.name">
+  <fireInterval>0.45</fireInterval>
+  <range>14</range>
+  <baseDamage>18</baseDamage>
+  <projectileSpeed>18</projectileSpeed>
+  <projectileLifetime>2.2</projectileLifetime>
+  <projectileScale>0.28</projectileScale>
+  <projectileColor r="0.8" g="0.95" b="1" a="1" />
+</weapon>

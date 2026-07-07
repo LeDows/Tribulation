@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level>
+  <startLevel>1</startLevel>
+  <firstLevelExperience>6</firstLevelExperience>
+  <experienceGrowthMultiplier>1.24</experienceGrowthMultiplier>
+  <experienceGrowthFlat>2</experienceGrowthFlat>
+  <maxHealthPerLevel>12</maxHealthPerLevel>
+  <healOnLevelUp>28</healOnLevelUp>
+  <moveSpeedPerLevel>0.12</moveSpeedPerLevel>
+  <damageMultiplierPerLevel>0.08</damageMultiplierPerLevel>
+</level>

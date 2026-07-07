@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<enemies>
+  <enemy id="hungry_spirit" displayNameKey="enemy.hungry_spirit.name">
+    <maxHealth>30</maxHealth>
+    <experienceValue>1</experienceValue>
+    <eliteChance>0.15</eliteChance>
+    <eliteExperienceValue>2</eliteExperienceValue>
+    <minMoveSpeed>2.6</minMoveSpeed>
+    <maxMoveSpeed>3.8</maxMoveSpeed>
+    <contactDamage>8</contactDamage>
+    <attackInterval>0.75</attackInterval>
+    <attackRange>1.35</attackRange>
+    <speedDifficultySeconds>240</speedDifficultySeconds>
+    <colliderRadius>0.45</colliderRadius>
+    <color r="0.75" g="0.16" b="0.22" a="1" />
+  </enemy>
+  <enemy id="bone_imp" displayNameKey="enemy.bone_imp.name">
+    <maxHealth>18</maxHealth>
+    <experienceValue>1</experienceValue>
+    <eliteChance>0.08</eliteChance>
+    <eliteExperienceValue>2</eliteExperienceValue>
+    <minMoveSpeed>3.8</minMoveSpeed>
+    <maxMoveSpeed>4.8</maxMoveSpeed>
+    <contactDamage>5</contactDamage>
+    <attackInterval>0.55</attackInterval>
+    <attackRange>1.15</attackRange>
+    <speedDifficultySeconds>260</speedDifficultySeconds>
+    <colliderRadius>0.38</colliderRadius>
+    <color r="0.58" g="0.72" b="0.95" a="1" />
+  </enemy>
+</enemies>

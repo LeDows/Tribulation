@@ -21,10 +21,12 @@ namespace Tribulation.Combat
         private PlayerStats stats;
         private float cooldown;
 
+        public float CurrentDamage => BaseDamage * (stats != null ? stats.DamageMultiplier : 1f);
+
         private void Awake()
         {
             stats = GetComponent<PlayerStats>();
-            ApplyConfig(GameConfigService.Config.weapon);
+            ApplyConfig(ConfigCenter.Weapon);
         }
 
         private void ApplyConfig(WeaponConfig config)
@@ -35,7 +37,7 @@ namespace Tribulation.Combat
             ProjectileSpeed = config.projectileSpeed;
             ProjectileLifetime = config.projectileLifetime;
             ProjectileScale = config.projectileScale;
-            ProjectileName = config.projectileName;
+            ProjectileName = ConfigCenter.Text(config.nameKey);
             ProjectileColor = config.projectileColor;
         }
 
@@ -90,9 +92,35 @@ namespace Tribulation.Combat
             var projectile = projectileObject.GetComponent<Projectile>();
             projectile.Launch(
                 targetPosition - transform.position,
-                BaseDamage * stats.DamageMultiplier,
+                CurrentDamage,
                 ProjectileSpeed,
                 ProjectileLifetime);
+        }
+
+        public void AddBaseDamage(float amount)
+        {
+            BaseDamage += amount;
+        }
+
+        public void ReduceFireIntervalPercent(float percent)
+        {
+            FireInterval *= Mathf.Clamp01(1f - percent);
+            FireInterval = Mathf.Max(0.08f, FireInterval);
+        }
+
+        public void AddRange(float amount)
+        {
+            Range += amount;
+        }
+
+        public void AddProjectileSpeed(float amount)
+        {
+            ProjectileSpeed += amount;
+        }
+
+        public void AddProjectileScale(float amount)
+        {
+            ProjectileScale = Mathf.Max(0.05f, ProjectileScale + amount);
         }
     }
 }

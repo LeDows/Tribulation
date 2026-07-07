@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pickup nameKey="pickup.spirit_qi.name">
+  <magnetRadius>5</magnetRadius>
+  <moveSpeed>10</moveSpeed>
+  <scale>0.35</scale>
+  <color r="0.35" g="1" b="0.7" a="1" />
+</pickup>
