@@ -86,8 +86,8 @@ namespace Tribulation.Core
             }
 
             runRoot = runRootObject.transform;
-            CreateGround(map);
             var player = CreatePlayer(config.GetSelectedCharacter(), map);
+            CreateGround(map, player.transform);
             CreateCamera(player.transform, map.camera);
             CreateSpawner(map);
             ui?.ShowHud();
@@ -147,16 +147,11 @@ namespace Tribulation.Core
             return stats;
         }
 
-        private void CreateGround(MapConfig map)
+        private void CreateGround(MapConfig map, Transform target)
         {
-            var ground = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Ground, runRoot);
-            ground.name = map.displayName;
-            ground.transform.localScale = map.groundScale;
-
-            if (ground.TryGetComponent<Renderer>(out var renderer))
-            {
-                renderer.material.color = map.groundColor;
-            }
+            var groundRoot = new GameObject($"{map.displayName} (Infinite)");
+            groundRoot.transform.SetParent(runRoot, false);
+            groundRoot.AddComponent<InfiniteGround>().Configure(target, map);
         }
 
         private void CreateSpawner(MapConfig map)

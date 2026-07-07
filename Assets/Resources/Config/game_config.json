@@ -82,7 +82,10 @@
         "mouseSensitivity": 0.22,
         "positionSharpness": 18,
         "rotationSharpness": 22,
-        "pitchLimits": { "x": 30, "y": 75 }
+        "pitchLimits": {
+          "x": 25,
+          "y": 75
+        }
       },
       "spawn": {
         "enemyId": "hungry_spirit",
