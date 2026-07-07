@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <level>
-  <startLevel>1</startLevel>
+  <startLevel>0</startLevel>
   <firstLevelExperience>6</firstLevelExperience>
   <experienceGrowthMultiplier>1.24</experienceGrowthMultiplier>
   <experienceGrowthFlat>2</experienceGrowthFlat>

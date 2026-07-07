@@ -18,6 +18,7 @@ namespace Tribulation.Config
         public static string Language => Data.Settings.language;
         public static CharacterConfig[] Characters => Data.Characters;
         public static EnemyConfig[] Enemies => Data.Enemies;
+        public static CultivationConfig Cultivation => Data.Cultivation;
         public static LevelConfig Level => Data.Level;
         public static MapConfig[] Maps => Data.Maps;
         public static WeaponConfig Weapon => Data.Weapon;
@@ -119,6 +120,7 @@ namespace Tribulation.Config
             var characters = LoadXml("characters", CharacterConfigList.CreateDefault).items ?? Array.Empty<CharacterConfig>();
             var enemies = LoadXml("enemies", EnemyConfigList.CreateDefault).items ?? Array.Empty<EnemyConfig>();
             var maps = LoadXml("maps", MapConfigList.CreateDefault).items ?? Array.Empty<MapConfig>();
+            var cultivation = LoadXml("cultivation", CultivationConfig.CreateDefault);
             var level = LoadXml("level", LevelConfig.CreateDefault);
             var weapon = LoadXml("weapon", WeaponConfig.CreateDefault);
             var pickup = LoadXml("pickup", PickupConfig.CreateDefault);
@@ -134,6 +136,7 @@ namespace Tribulation.Config
                 characters,
                 enemies,
                 maps,
+                cultivation,
                 level,
                 weapon,
                 pickup,
@@ -192,6 +195,7 @@ namespace Tribulation.Config
             public readonly CharacterConfig[] Characters;
             public readonly EnemyConfig[] Enemies;
             public readonly MapConfig[] Maps;
+            public readonly CultivationConfig Cultivation;
             public readonly LevelConfig Level;
             public readonly WeaponConfig Weapon;
             public readonly PickupConfig Pickup;
@@ -207,6 +211,7 @@ namespace Tribulation.Config
                 CharacterConfig[] characters,
                 EnemyConfig[] enemies,
                 MapConfig[] maps,
+                CultivationConfig cultivation,
                 LevelConfig level,
                 WeaponConfig weapon,
                 PickupConfig pickup,
@@ -218,6 +223,7 @@ namespace Tribulation.Config
                 Characters = characters;
                 Enemies = enemies;
                 Maps = maps;
+                Cultivation = cultivation ?? CultivationConfig.CreateDefault();
                 Level = level;
                 Weapon = weapon;
                 Pickup = pickup;

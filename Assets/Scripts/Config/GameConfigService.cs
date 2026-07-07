@@ -9,6 +9,7 @@ namespace Tribulation.Config
             language = ConfigCenter.Language,
             characters = ConfigCenter.Characters,
             enemies = ConfigCenter.Enemies,
+            cultivation = ConfigCenter.Cultivation,
             maps = ConfigCenter.Maps,
             level = ConfigCenter.Level,
             weapon = ConfigCenter.Weapon,

@@ -144,13 +144,13 @@ namespace Tribulation.Core
                 return;
             }
 
-            if (State == GameState.LevelUpSelection)
+            pendingLevelUpSelections++;
+            if (State == GameState.LevelUpSelection || State == GameState.AttributeAllocation)
             {
-                pendingLevelUpSelections++;
                 return;
             }
 
-            ShowLevelUpSelection();
+            ShowNextLevelUpStep();
         }
 
         public void ChooseUpgradeOption(int optionIndex)
@@ -161,18 +161,25 @@ namespace Tribulation.Core
             }
 
             ApplyUpgradeOption(currentUpgradeOptions[optionIndex]);
+            pendingLevelUpSelections = Mathf.Max(0, pendingLevelUpSelections - 1);
+            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+            ShowNextLevelUpStep();
+        }
 
-            if (pendingLevelUpSelections > 0)
+        public void ChooseAttribute(CultivationAttribute attribute)
+        {
+            if (State != GameState.AttributeAllocation || Player == null)
             {
-                pendingLevelUpSelections--;
-                ShowLevelUpSelection();
                 return;
             }
 
-            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
-            State = GameState.Running;
-            Time.timeScale = 1f;
-            ui?.ShowHud();
+            if (!Player.AddAttributePoint(attribute))
+            {
+                return;
+            }
+
+            RefreshActiveProjectileDamage(Player.GetComponent<AutoWeapon>());
+            ShowNextLevelUpStep();
         }
 
         private PlayerStats CreatePlayer(CharacterConfig character, MapConfig map)
@@ -187,7 +194,7 @@ namespace Tribulation.Core
             }
 
             var stats = playerObject.GetComponent<PlayerStats>();
-            stats.Configure(character, ConfigCenter.Level);
+            stats.Configure(character, ConfigCenter.Level, ConfigCenter.Cultivation);
             RegisterPlayer(stats);
             return stats;
         }
@@ -241,6 +248,33 @@ namespace Tribulation.Core
             Player = null;
             pendingLevelUpSelections = 0;
             currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+        }
+
+        private void ShowNextLevelUpStep()
+        {
+            if (Player != null && Player.UnspentAttributePoints > 0)
+            {
+                ShowAttributeAllocation();
+                return;
+            }
+
+            if (pendingLevelUpSelections > 0)
+            {
+                ShowLevelUpSelection();
+                return;
+            }
+
+            currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
+            State = GameState.Running;
+            Time.timeScale = 1f;
+            ui?.ShowHud();
+        }
+
+        private void ShowAttributeAllocation()
+        {
+            State = GameState.AttributeAllocation;
+            Time.timeScale = 0f;
+            ui?.ShowAttributeAllocation(Player);
         }
 
         private void ShowLevelUpSelection()

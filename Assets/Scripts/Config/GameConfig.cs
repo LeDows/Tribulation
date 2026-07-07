@@ -74,6 +74,7 @@ namespace Tribulation.Config
         public string language = "zh-CN";
         public CharacterConfig[] characters = Array.Empty<CharacterConfig>();
         public EnemyConfig[] enemies = Array.Empty<EnemyConfig>();
+        public CultivationConfig cultivation = new();
         public LevelConfig level = new();
         public MapConfig[] maps = Array.Empty<MapConfig>();
         public WeaponConfig weapon = new();
@@ -142,10 +143,244 @@ namespace Tribulation.Config
                 characters = new[] { CharacterConfig.CreateDefault() },
                 enemies = new[] { EnemyConfig.CreateDefault() },
                 maps = new[] { MapConfig.CreateDefault() },
+                cultivation = CultivationConfig.CreateDefault(),
                 level = LevelConfig.CreateDefault(),
                 weapon = WeaponConfig.CreateDefault(),
                 pickup = PickupConfig.CreateDefault(),
                 upgradeOptions = UpgradeOptionConfig.CreateDefaults()
+            };
+        }
+    }
+
+    public enum CultivationAttribute
+    {
+        SpiritPower,
+        DivineSense,
+        Root,
+        Insight,
+        Fortune,
+        Agility,
+        Will
+    }
+
+    [Serializable]
+    [XmlRoot("cultivation")]
+    public sealed class CultivationConfig
+    {
+        public int maxLevel = 999;
+        public int firstAttributePointLevel = 1;
+        public int attributePointLevelInterval = 10;
+        public int minAttributePointsPerLevel = 1;
+        public int maxAttributePointsPerLevel = 3;
+        public float insightExtraPointChancePerPoint = 0.04f;
+        public float maxDamageReduction = 0.8f;
+        public string initialRealmNameKey = "cultivation.realm.initial";
+
+        [XmlArray("realms")]
+        [XmlArrayItem("realm")]
+        public RealmConfig[] realms = Array.Empty<RealmConfig>();
+
+        [XmlArray("effects")]
+        [XmlArrayItem("effect")]
+        public AttributeEffectConfig[] effects = Array.Empty<AttributeEffectConfig>();
+
+        public RealmConfig GetRealmForLevel(int level)
+        {
+            if (realms == null || realms.Length == 0)
+            {
+                return RealmConfig.CreateDefault();
+            }
+
+            foreach (var realm in realms)
+            {
+                if (realm != null && level >= realm.startLevel && level <= realm.endLevel)
+                {
+                    return realm;
+                }
+            }
+
+            return level < realms[0].startLevel ? realms[0] : realms[^1];
+        }
+
+        public AttributeEffectConfig GetEffect(CultivationAttribute attribute)
+        {
+            if (effects != null)
+            {
+                foreach (var effect in effects)
+                {
+                    if (effect != null && effect.attribute == attribute)
+                    {
+                        return effect;
+                    }
+                }
+            }
+
+            return AttributeEffectConfig.CreateDefault(attribute);
+        }
+
+        public static CultivationConfig CreateDefault()
+        {
+            return new CultivationConfig
+            {
+                realms = RealmConfig.CreateDefaults(),
+                effects = AttributeEffectConfig.CreateDefaults()
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class RealmConfig
+    {
+        [XmlAttribute] public string id = "qi_refining";
+        [XmlAttribute] public string displayNameKey = "cultivation.realm.qi_refining";
+        [XmlAttribute] public int startLevel = 1;
+        [XmlAttribute] public int endLevel = 100;
+        [XmlAttribute] public int spiritPowerPerTen = 2;
+        [XmlAttribute] public int divineSensePerTen = 1;
+        [XmlAttribute] public float maxHealthPerTen;
+        [XmlAttribute] public string achievementKey = "cultivation.achievement.breathing_qi";
+
+        public static RealmConfig CreateDefault()
+        {
+            return new RealmConfig();
+        }
+
+        public static RealmConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                new RealmConfig(),
+                new RealmConfig
+                {
+                    id = "foundation",
+                    displayNameKey = "cultivation.realm.foundation",
+                    startLevel = 101,
+                    endLevel = 200,
+                    spiritPowerPerTen = 4,
+                    divineSensePerTen = 2,
+                    maxHealthPerTen = 50f,
+                    achievementKey = "cultivation.achievement.wind_walking"
+                },
+                new RealmConfig
+                {
+                    id = "golden_core",
+                    displayNameKey = "cultivation.realm.golden_core",
+                    startLevel = 201,
+                    endLevel = 300,
+                    spiritPowerPerTen = 6,
+                    divineSensePerTen = 3,
+                    maxHealthPerTen = 100f,
+                    achievementKey = "cultivation.achievement.solid_core"
+                },
+                new RealmConfig
+                {
+                    id = "nascent_soul",
+                    displayNameKey = "cultivation.realm.nascent_soul",
+                    startLevel = 301,
+                    endLevel = 400,
+                    spiritPowerPerTen = 10,
+                    divineSensePerTen = 5,
+                    maxHealthPerTen = 200f,
+                    achievementKey = "cultivation.achievement.soul_departure"
+                },
+                new RealmConfig
+                {
+                    id = "spirit_transformation",
+                    displayNameKey = "cultivation.realm.spirit_transformation",
+                    startLevel = 401,
+                    endLevel = 500,
+                    spiritPowerPerTen = 15,
+                    divineSensePerTen = 8,
+                    maxHealthPerTen = 400f,
+                    achievementKey = "cultivation.achievement.world_force"
+                },
+                new RealmConfig
+                {
+                    id = "body_integration",
+                    displayNameKey = "cultivation.realm.body_integration",
+                    startLevel = 501,
+                    endLevel = 600,
+                    spiritPowerPerTen = 20,
+                    divineSensePerTen = 12,
+                    maxHealthPerTen = 800f,
+                    achievementKey = "cultivation.achievement.all_as_one"
+                },
+                new RealmConfig
+                {
+                    id = "mahayana",
+                    displayNameKey = "cultivation.realm.mahayana",
+                    startLevel = 601,
+                    endLevel = 700,
+                    spiritPowerPerTen = 30,
+                    divineSensePerTen = 18,
+                    maxHealthPerTen = 1500f,
+                    achievementKey = "cultivation.achievement.great_way"
+                },
+                new RealmConfig
+                {
+                    id = "tribulation",
+                    displayNameKey = "cultivation.realm.tribulation",
+                    startLevel = 701,
+                    endLevel = 800,
+                    spiritPowerPerTen = 45,
+                    divineSensePerTen = 25,
+                    maxHealthPerTen = 3000f,
+                    achievementKey = "cultivation.achievement.heavenly_trial"
+                },
+                new RealmConfig
+                {
+                    id = "ascension",
+                    displayNameKey = "cultivation.realm.ascension",
+                    startLevel = 801,
+                    endLevel = 999,
+                    spiritPowerPerTen = 60,
+                    divineSensePerTen = 35,
+                    maxHealthPerTen = 5000f,
+                    achievementKey = "cultivation.achievement.transcendence"
+                }
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class AttributeEffectConfig
+    {
+        [XmlAttribute] public CultivationAttribute attribute = CultivationAttribute.SpiritPower;
+        [XmlAttribute] public float damageMultiplier;
+        [XmlAttribute] public float critChance;
+        [XmlAttribute] public float pickupRadius;
+        [XmlAttribute] public float maxHealth;
+        [XmlAttribute] public float experienceGain;
+        [XmlAttribute] public float rareRewardChance;
+        [XmlAttribute] public float moveSpeed;
+        [XmlAttribute] public float damageReduction;
+
+        public static AttributeEffectConfig CreateDefault(CultivationAttribute attribute)
+        {
+            return attribute switch
+            {
+                CultivationAttribute.SpiritPower => new AttributeEffectConfig { attribute = attribute, damageMultiplier = 0.01f },
+                CultivationAttribute.DivineSense => new AttributeEffectConfig { attribute = attribute, critChance = 0.005f, pickupRadius = 0.2f },
+                CultivationAttribute.Root => new AttributeEffectConfig { attribute = attribute, maxHealth = 10f },
+                CultivationAttribute.Insight => new AttributeEffectConfig { attribute = attribute, experienceGain = 0.01f },
+                CultivationAttribute.Fortune => new AttributeEffectConfig { attribute = attribute, rareRewardChance = 0.01f },
+                CultivationAttribute.Agility => new AttributeEffectConfig { attribute = attribute, moveSpeed = 0.05f },
+                CultivationAttribute.Will => new AttributeEffectConfig { attribute = attribute, damageReduction = 0.005f },
+                _ => new AttributeEffectConfig { attribute = attribute }
+            };
+        }
+
+        public static AttributeEffectConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                CreateDefault(CultivationAttribute.SpiritPower),
+                CreateDefault(CultivationAttribute.DivineSense),
+                CreateDefault(CultivationAttribute.Root),
+                CreateDefault(CultivationAttribute.Insight),
+                CreateDefault(CultivationAttribute.Fortune),
+                CreateDefault(CultivationAttribute.Agility),
+                CreateDefault(CultivationAttribute.Will)
             };
         }
     }
@@ -170,7 +405,7 @@ namespace Tribulation.Config
     [XmlRoot("level")]
     public sealed class LevelConfig
     {
-        public int startLevel = 1;
+        public int startLevel = 0;
         public int firstLevelExperience = 6;
         public float experienceGrowthMultiplier = 1.24f;
         public int experienceGrowthFlat = 2;

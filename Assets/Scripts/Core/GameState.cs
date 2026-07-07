@@ -4,6 +4,7 @@ namespace Tribulation.Core
     {
         MainMenu,
         Running,
+        AttributeAllocation,
         LevelUpSelection,
         GameOver
     }

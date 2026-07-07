@@ -39,7 +39,8 @@ namespace Tribulation.Pickups
             }
 
             var toPlayer = player.transform.position - transform.position;
-            if (toPlayer.sqrMagnitude <= MagnetRadius * MagnetRadius)
+            var magnetRadius = MagnetRadius + player.PickupRadiusBonus;
+            if (toPlayer.sqrMagnitude <= magnetRadius * magnetRadius)
             {
                 transform.position += toPlayer.normalized * (MoveSpeed * Time.deltaTime);
             }

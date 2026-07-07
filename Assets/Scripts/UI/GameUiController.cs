@@ -14,6 +14,7 @@ namespace Tribulation.UI
         private GameObject hudPanel;
         private GameObject resultPanel;
         private GameObject levelUpPanel;
+        private GameObject attributePanel;
         private Text levelText;
         private Text experienceText;
         private Text healthText;
@@ -22,12 +23,25 @@ namespace Tribulation.UI
         private Text statsText;
         private Text weaponStatsText;
         private Text lastUpgradeText;
+        private Text attributePointsText;
         private Text resultTimeText;
         private Text resultKillsText;
         private Text resultLevelText;
         private readonly Button[] levelUpOptionButtons = new Button[3];
         private readonly Text[] levelUpOptionTitleTexts = new Text[3];
         private readonly Text[] levelUpOptionDescriptionTexts = new Text[3];
+        private readonly CultivationAttribute[] attributeOrder =
+        {
+            CultivationAttribute.SpiritPower,
+            CultivationAttribute.DivineSense,
+            CultivationAttribute.Root,
+            CultivationAttribute.Insight,
+            CultivationAttribute.Fortune,
+            CultivationAttribute.Agility,
+            CultivationAttribute.Will
+        };
+        private readonly Button[] attributeButtons = new Button[7];
+        private readonly Text[] attributeValueTexts = new Text[7];
 
         private void Awake()
         {
@@ -35,6 +49,7 @@ namespace Tribulation.UI
             hudPanel = FindChild("HudPanel");
             resultPanel = FindChild("ResultPanel");
             levelUpPanel = FindChild("LevelUpPanel");
+            attributePanel = FindChild("AttributePanel");
 
             levelText = FindText("LevelValue");
             experienceText = FindText("ExperienceValue");
@@ -44,6 +59,7 @@ namespace Tribulation.UI
             statsText = FindText("StatsValue", false);
             weaponStatsText = FindText("WeaponStatsValue", false);
             lastUpgradeText = FindText("LastUpgradeValue", false);
+            attributePointsText = FindText("AttributePointsValue");
             resultTimeText = FindText("ResultTimeValue");
             resultKillsText = FindText("ResultKillsValue");
             resultLevelText = FindText("ResultLevelValue");
@@ -68,6 +84,19 @@ namespace Tribulation.UI
                     levelUpOptionButtons[i].onClick.AddListener(() => GameManager.Instance.ChooseUpgradeOption(optionIndex));
                 }
             }
+
+            for (var i = 0; i < attributeOrder.Length; i++)
+            {
+                var suffix = GetAttributeObjectSuffix(attributeOrder[i]);
+                attributeButtons[i] = FindButton($"Attribute{suffix}Button");
+                attributeValueTexts[i] = FindText($"Attribute{suffix}Value");
+                var attribute = attributeOrder[i];
+                if (attributeButtons[i] != null)
+                {
+                    attributeButtons[i].onClick.RemoveAllListeners();
+                    attributeButtons[i].onClick.AddListener(() => GameManager.Instance.ChooseAttribute(attribute));
+                }
+            }
         }
 
         private void Update()
@@ -87,6 +116,7 @@ namespace Tribulation.UI
             SetPanel(hudPanel, false);
             SetPanel(resultPanel, false);
             SetPanel(levelUpPanel, false);
+            SetPanel(attributePanel, false);
         }
 
         public void ShowHud()
@@ -95,6 +125,7 @@ namespace Tribulation.UI
             SetPanel(hudPanel, true);
             SetPanel(resultPanel, false);
             SetPanel(levelUpPanel, false);
+            SetPanel(attributePanel, false);
             RefreshHud(GameManager.Instance);
         }
 
@@ -105,6 +136,7 @@ namespace Tribulation.UI
             SetPanel(hudPanel, false);
             SetPanel(resultPanel, true);
             SetPanel(levelUpPanel, false);
+            SetPanel(attributePanel, false);
 
             if (manager == null)
             {
@@ -113,7 +145,7 @@ namespace Tribulation.UI
 
             SetText(resultTimeText, FormatTime(manager.RunTime));
             SetText(resultKillsText, manager.KillCount.ToString());
-            SetText(resultLevelText, manager.Player != null ? manager.Player.Level.ToString() : "0");
+            SetText(resultLevelText, manager.Player != null ? manager.Player.RealmLayerDisplay : "0");
         }
 
         public void ShowLevelUpOptions(UpgradeOptionConfig[] options)
@@ -122,6 +154,7 @@ namespace Tribulation.UI
             SetPanel(hudPanel, true);
             SetPanel(resultPanel, false);
             SetPanel(levelUpPanel, true);
+            SetPanel(attributePanel, false);
             RefreshHud(GameManager.Instance);
 
             for (var i = 0; i < levelUpOptionButtons.Length; i++)
@@ -139,6 +172,17 @@ namespace Tribulation.UI
             }
         }
 
+        public void ShowAttributeAllocation(PlayerStats player)
+        {
+            SetPanel(mainMenuPanel, false);
+            SetPanel(hudPanel, true);
+            SetPanel(resultPanel, false);
+            SetPanel(levelUpPanel, false);
+            SetPanel(attributePanel, true);
+            RefreshHud(GameManager.Instance);
+            RefreshAttributePanel(player);
+        }
+
         private void RefreshHud(GameManager manager)
         {
             if (manager == null)
@@ -152,7 +196,7 @@ namespace Tribulation.UI
                 return;
             }
 
-            SetText(levelText, player.Level.ToString());
+            SetText(levelText, player.RealmLayerDisplay);
             SetText(experienceText, $"{player.Experience}/{player.ExperienceToNextLevel}");
             SetText(healthText, $"{Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}");
             SetText(killsText, manager.KillCount.ToString());
@@ -160,6 +204,29 @@ namespace Tribulation.UI
             SetText(statsText, FormatCharacterStats(player));
             SetText(weaponStatsText, FormatWeaponStats(player.GetComponent<AutoWeapon>()));
             SetText(lastUpgradeText, FormatRunStats(manager));
+        }
+
+        private void RefreshAttributePanel(PlayerStats player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            SetText(attributePointsText, ConfigCenter.Text("ui.attribute.points_value", player.UnspentAttributePoints));
+            for (var i = 0; i < attributeOrder.Length; i++)
+            {
+                SetText(
+                    attributeValueTexts[i],
+                    ConfigCenter.Text(
+                        "ui.attribute.row_value",
+                        ConfigCenter.Text(GetAttributeLabelKey(attributeOrder[i])),
+                        player.GetAttributePoints(attributeOrder[i])));
+                if (attributeButtons[i] != null)
+                {
+                    attributeButtons[i].interactable = player.UnspentAttributePoints > 0;
+                }
+            }
         }
 
         private static object GetUpgradeDisplayValue(UpgradeOptionConfig option)
@@ -291,11 +358,24 @@ namespace Tribulation.UI
             return string.Join(
                 "\n",
                 ConfigCenter.Text("ui.hud.character_title"),
-                FormatHudLine("ui.hud.level_label", player.Level.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.hud.level_label", player.RealmLayerDisplay),
+                FormatHudLine("ui.hud.level_number_label", player.Level.ToString(CultureInfo.InvariantCulture)),
                 FormatHudLine("ui.hud.qi_label", $"{player.Experience}/{player.ExperienceToNextLevel}"),
                 FormatHudLine("ui.hud.health_label", $"{Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}"),
+                FormatHudLine("ui.attribute.spirit_power", player.SpiritPower.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.divine_sense", player.DivineSense.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.root", player.Root.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.insight", player.Insight.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.fortune", player.Fortune.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.agility", player.Agility.ToString(CultureInfo.InvariantCulture)),
+                FormatHudLine("ui.attribute.will", player.Will.ToString(CultureInfo.InvariantCulture)),
                 FormatHudLine("ui.hud.move_speed_label", FormatDecimal(player.MoveSpeed, "0.00")),
-                FormatHudLine("ui.hud.damage_multiplier_label", ConfigCenter.Text("ui.hud.multiplier_value", FormatDecimal(player.DamageMultiplier, "0.00"))));
+                FormatHudLine("ui.hud.damage_multiplier_label", ConfigCenter.Text("ui.hud.multiplier_value", FormatDecimal(player.DamageMultiplier, "0.00"))),
+                FormatHudLine("ui.hud.crit_chance_label", FormatPercent(player.CritChance)),
+                FormatHudLine("ui.hud.pickup_radius_label", FormatDecimal(player.PickupRadiusBonus, "0.0")),
+                FormatHudLine("ui.hud.experience_gain_label", ConfigCenter.Text("ui.hud.multiplier_value", FormatDecimal(player.ExperienceGainMultiplier, "0.00"))),
+                FormatHudLine("ui.hud.rare_reward_label", FormatPercent(player.RareRewardChanceBonus)),
+                FormatHudLine("ui.hud.damage_reduction_label", FormatPercent(player.DamageReduction)));
         }
 
         private static string FormatRunStats(GameManager manager)
@@ -330,6 +410,41 @@ namespace Tribulation.UI
         private static string FormatPerSecond(float value)
         {
             return ConfigCenter.Text("ui.hud.per_second_value", FormatDecimal(value, "0.00"));
+        }
+
+        private static string FormatPercent(float value)
+        {
+            return ConfigCenter.Text("ui.hud.percent_value", Mathf.RoundToInt(value * 100f));
+        }
+
+        private static string GetAttributeObjectSuffix(CultivationAttribute attribute)
+        {
+            return attribute switch
+            {
+                CultivationAttribute.SpiritPower => "SpiritPower",
+                CultivationAttribute.DivineSense => "DivineSense",
+                CultivationAttribute.Root => "Root",
+                CultivationAttribute.Insight => "Insight",
+                CultivationAttribute.Fortune => "Fortune",
+                CultivationAttribute.Agility => "Agility",
+                CultivationAttribute.Will => "Will",
+                _ => string.Empty
+            };
+        }
+
+        private static string GetAttributeLabelKey(CultivationAttribute attribute)
+        {
+            return attribute switch
+            {
+                CultivationAttribute.SpiritPower => "ui.attribute.spirit_power",
+                CultivationAttribute.DivineSense => "ui.attribute.divine_sense",
+                CultivationAttribute.Root => "ui.attribute.root",
+                CultivationAttribute.Insight => "ui.attribute.insight",
+                CultivationAttribute.Fortune => "ui.attribute.fortune",
+                CultivationAttribute.Agility => "ui.attribute.agility",
+                CultivationAttribute.Will => "ui.attribute.will",
+                _ => string.Empty
+            };
         }
 
         private void HideLegacyHudRows()

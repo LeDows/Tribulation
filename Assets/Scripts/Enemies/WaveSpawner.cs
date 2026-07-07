@@ -75,7 +75,9 @@ namespace Tribulation.Enemies
             }
 
             var health = enemyObject.GetComponent<EnemyHealth>();
-            var experience = Random.value < enemy.eliteChance ? enemy.eliteExperienceValue : enemy.experienceValue;
+            var player = GameManager.Instance.Player;
+            var eliteChance = Mathf.Clamp01(enemy.eliteChance + (player != null ? player.RareRewardChanceBonus : 0f));
+            var experience = Random.value < eliteChance ? enemy.eliteExperienceValue : enemy.experienceValue;
             health.Configure(enemy.maxHealth, experience);
 
             var controller = enemyObject.GetComponent<EnemyController>();

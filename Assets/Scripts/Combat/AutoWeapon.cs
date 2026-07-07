@@ -90,9 +90,15 @@ namespace Tribulation.Combat
             }
 
             var projectile = projectileObject.GetComponent<Projectile>();
+            var damage = CurrentDamage;
+            if (stats != null && Random.value < stats.CritChance)
+            {
+                damage *= 2f;
+            }
+
             projectile.Launch(
                 targetPosition - transform.position,
-                CurrentDamage,
+                damage,
                 ProjectileSpeed,
                 ProjectileLifetime);
         }

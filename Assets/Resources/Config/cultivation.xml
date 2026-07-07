@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cultivation>
+  <maxLevel>999</maxLevel>
+  <firstAttributePointLevel>1</firstAttributePointLevel>
+  <attributePointLevelInterval>10</attributePointLevelInterval>
+  <minAttributePointsPerLevel>1</minAttributePointsPerLevel>
+  <maxAttributePointsPerLevel>3</maxAttributePointsPerLevel>
+  <insightExtraPointChancePerPoint>0.04</insightExtraPointChancePerPoint>
+  <maxDamageReduction>0.8</maxDamageReduction>
+  <initialRealmNameKey>cultivation.realm.initial</initialRealmNameKey>
+  <realms>
+    <realm id="qi_refining" displayNameKey="cultivation.realm.qi_refining" startLevel="1" endLevel="100" spiritPowerPerTen="2" divineSensePerTen="1" maxHealthPerTen="0" achievementKey="cultivation.achievement.breathing_qi" />
+    <realm id="foundation" displayNameKey="cultivation.realm.foundation" startLevel="101" endLevel="200" spiritPowerPerTen="4" divineSensePerTen="2" maxHealthPerTen="50" achievementKey="cultivation.achievement.wind_walking" />
+    <realm id="golden_core" displayNameKey="cultivation.realm.golden_core" startLevel="201" endLevel="300" spiritPowerPerTen="6" divineSensePerTen="3" maxHealthPerTen="100" achievementKey="cultivation.achievement.solid_core" />
+    <realm id="nascent_soul" displayNameKey="cultivation.realm.nascent_soul" startLevel="301" endLevel="400" spiritPowerPerTen="10" divineSensePerTen="5" maxHealthPerTen="200" achievementKey="cultivation.achievement.soul_departure" />
+    <realm id="spirit_transformation" displayNameKey="cultivation.realm.spirit_transformation" startLevel="401" endLevel="500" spiritPowerPerTen="15" divineSensePerTen="8" maxHealthPerTen="400" achievementKey="cultivation.achievement.world_force" />
+    <realm id="body_integration" displayNameKey="cultivation.realm.body_integration" startLevel="501" endLevel="600" spiritPowerPerTen="20" divineSensePerTen="12" maxHealthPerTen="800" achievementKey="cultivation.achievement.all_as_one" />
+    <realm id="mahayana" displayNameKey="cultivation.realm.mahayana" startLevel="601" endLevel="700" spiritPowerPerTen="30" divineSensePerTen="18" maxHealthPerTen="1500" achievementKey="cultivation.achievement.great_way" />
+    <realm id="tribulation" displayNameKey="cultivation.realm.tribulation" startLevel="701" endLevel="800" spiritPowerPerTen="45" divineSensePerTen="25" maxHealthPerTen="3000" achievementKey="cultivation.achievement.heavenly_trial" />
+    <realm id="ascension" displayNameKey="cultivation.realm.ascension" startLevel="801" endLevel="999" spiritPowerPerTen="60" divineSensePerTen="35" maxHealthPerTen="5000" achievementKey="cultivation.achievement.transcendence" />
+  </realms>
+  <effects>
+    <effect attribute="SpiritPower" damageMultiplier="0.01" />
+    <effect attribute="DivineSense" critChance="0.005" pickupRadius="0.2" />
+    <effect attribute="Root" maxHealth="10" />
+    <effect attribute="Insight" experienceGain="0.01" />
+    <effect attribute="Fortune" rareRewardChance="0.01" />
+    <effect attribute="Agility" moveSpeed="0.05" />
+    <effect attribute="Will" damageReduction="0.005" />
+  </effects>
+</cultivation>
