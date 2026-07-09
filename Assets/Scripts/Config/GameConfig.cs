@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -77,7 +78,7 @@ namespace Tribulation.Config
         public CultivationConfig cultivation = new();
         public LevelConfig level = new();
         public MapConfig[] maps = Array.Empty<MapConfig>();
-        public WeaponConfig weapon = new();
+        public WeaponCatalogConfig weapon = new();
         public PickupConfig pickup = new();
         public UpgradeOptionConfig[] upgradeOptions = Array.Empty<UpgradeOptionConfig>();
 
@@ -145,7 +146,7 @@ namespace Tribulation.Config
                 maps = new[] { MapConfig.CreateDefault() },
                 cultivation = CultivationConfig.CreateDefault(),
                 level = LevelConfig.CreateDefault(),
-                weapon = WeaponConfig.CreateDefault(),
+                weapon = WeaponCatalogConfig.CreateDefault(),
                 pickup = PickupConfig.CreateDefault(),
                 upgradeOptions = UpgradeOptionConfig.CreateDefaults()
             };
@@ -487,17 +488,649 @@ namespace Tribulation.Config
         public int maxEnemies = 90;
     }
 
+    public enum WeaponQuality
+    {
+        Common,
+        Spirit,
+        Treasure,
+        Immortal,
+        Saint,
+        Dao
+    }
+
+    public enum WeaponSchool
+    {
+        Sword,
+        Fire,
+        Thunder,
+        Poison,
+        Body,
+        Formation,
+        Water
+    }
+
+    public enum WeaponAttackPattern
+    {
+        Projectile,
+        BurstProjectiles,
+        Cone,
+        AreaAtTarget,
+        Lightning,
+        Aura
+    }
+
+    public enum WeaponTargetMode
+    {
+        Nearest,
+        Random,
+        Strongest
+    }
+
     [Serializable]
     [XmlRoot("weapon")]
+    public sealed class WeaponCatalogConfig
+    {
+        [XmlAttribute] public int maxEquipped = 3;
+        [XmlAttribute] public string defaultWeaponIds = "iron_sword";
+        [XmlAttribute] public float enhancementDamageBonusPerLevel = 0.1f;
+        [XmlAttribute] public float enhancementCooldownReductionPerLevel = 0.02f;
+
+        [XmlArray("qualities")]
+        [XmlArrayItem("quality")]
+        public WeaponQualityConfig[] qualities = Array.Empty<WeaponQualityConfig>();
+
+        [XmlArray("affixes")]
+        [XmlArrayItem("affix")]
+        public WeaponAffixConfig[] affixes = Array.Empty<WeaponAffixConfig>();
+
+        [XmlArray("sets")]
+        [XmlArrayItem("set")]
+        public WeaponSetBonusConfig[] sets = Array.Empty<WeaponSetBonusConfig>();
+
+        [XmlArray("weapons")]
+        [XmlArrayItem("weapon")]
+        public WeaponConfig[] weapons = Array.Empty<WeaponConfig>();
+
+        [XmlArray("forgeRecipes")]
+        [XmlArrayItem("recipe")]
+        public WeaponForgeRecipeConfig[] forgeRecipes = Array.Empty<WeaponForgeRecipeConfig>();
+
+        public string[] GetDefaultWeaponIds()
+        {
+            if (string.IsNullOrWhiteSpace(defaultWeaponIds))
+            {
+                return Array.Empty<string>();
+            }
+
+            return SplitIds(defaultWeaponIds);
+        }
+
+        public WeaponConfig FindWeapon(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id) || weapons == null)
+            {
+                return null;
+            }
+
+            foreach (var weapon in weapons)
+            {
+                if (weapon != null && weapon.id == id)
+                {
+                    return weapon;
+                }
+            }
+
+            return null;
+        }
+
+        public WeaponConfig GetFirstWeapon()
+        {
+            return weapons != null && weapons.Length > 0 ? weapons[0] : WeaponConfig.CreateDefault();
+        }
+
+        public WeaponQualityConfig FindQuality(WeaponQuality quality)
+        {
+            if (qualities != null)
+            {
+                foreach (var config in qualities)
+                {
+                    if (config != null && config.quality == quality)
+                    {
+                        return config;
+                    }
+                }
+            }
+
+            return WeaponQualityConfig.CreateDefault(quality);
+        }
+
+        public WeaponSetBonusConfig FindSet(WeaponSchool school)
+        {
+            if (sets != null)
+            {
+                foreach (var set in sets)
+                {
+                    if (set != null && set.school == school)
+                    {
+                        return set;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public int GetMaxEnhancementLevel(WeaponConfig weapon, IEnumerable<string> affixIds = null)
+        {
+            if (weapon == null)
+            {
+                return 0;
+            }
+
+            var quality = FindQuality(weapon.quality);
+            if (quality.maxEnhancementLevel < 0)
+            {
+                return int.MaxValue;
+            }
+
+            var maxLevel = quality.maxEnhancementLevel;
+            if (affixIds != null)
+            {
+                foreach (var affixId in affixIds)
+                {
+                    var affix = FindAffix(affixId);
+                    if (affix != null && affix.effectType == "enhancement_cap")
+                    {
+                        maxLevel += Mathf.RoundToInt(affix.value);
+                    }
+                }
+            }
+
+            return maxLevel;
+        }
+
+        public WeaponAffixConfig FindAffix(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id) || affixes == null)
+            {
+                return null;
+            }
+
+            foreach (var affix in affixes)
+            {
+                if (affix != null && affix.id == id)
+                {
+                    return affix;
+                }
+            }
+
+            return null;
+        }
+
+        public WeaponAffixConfig[] GetAffixesFor(WeaponQuality quality)
+        {
+            if (affixes == null || affixes.Length == 0)
+            {
+                return Array.Empty<WeaponAffixConfig>();
+            }
+
+            var matches = new List<WeaponAffixConfig>();
+            foreach (var affix in affixes)
+            {
+                if (affix != null && affix.CanAppearOn(quality))
+                {
+                    matches.Add(affix);
+                }
+            }
+
+            return matches.ToArray();
+        }
+
+        public bool TryGetForgeResult(string[] ingredientWeaponIds, out WeaponConfig result)
+        {
+            result = null;
+            if (ingredientWeaponIds == null || ingredientWeaponIds.Length == 0 || forgeRecipes == null)
+            {
+                return false;
+            }
+
+            var ingredients = new List<WeaponConfig>();
+            foreach (var ingredientId in ingredientWeaponIds)
+            {
+                var ingredient = FindWeapon(ingredientId);
+                if (ingredient == null)
+                {
+                    return false;
+                }
+
+                ingredients.Add(ingredient);
+            }
+
+            foreach (var recipe in forgeRecipes)
+            {
+                if (recipe == null || !recipe.Matches(ingredients))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(recipe.resultWeaponId))
+                {
+                    result = FindWeapon(recipe.resultWeaponId);
+                    return result != null;
+                }
+
+                var school = recipe.keepSchool && ingredients.Count > 0 ? ingredients[0].school : (WeaponSchool?)null;
+                result = FindFirstWeapon(recipe.outputQuality, school);
+                return result != null;
+            }
+
+            return false;
+        }
+
+        public WeaponConfig FindFirstWeapon(WeaponQuality quality, WeaponSchool? school = null)
+        {
+            if (weapons == null)
+            {
+                return null;
+            }
+
+            foreach (var weapon in weapons)
+            {
+                if (weapon == null || weapon.quality != quality)
+                {
+                    continue;
+                }
+
+                if (!school.HasValue || weapon.school == school.Value)
+                {
+                    return weapon;
+                }
+            }
+
+            return null;
+        }
+
+        public WeaponConfig GetRandomWeaponByQualityWeight()
+        {
+            if (weapons == null || weapons.Length == 0)
+            {
+                return WeaponConfig.CreateDefault();
+            }
+
+            var totalWeight = 0f;
+            foreach (var quality in qualities)
+            {
+                if (quality != null)
+                {
+                    totalWeight += Mathf.Max(0f, quality.dropWeight);
+                }
+            }
+
+            if (totalWeight <= 0f)
+            {
+                return weapons[UnityEngine.Random.Range(0, weapons.Length)];
+            }
+
+            var roll = UnityEngine.Random.value * totalWeight;
+            var selectedQuality = qualities[0].quality;
+            foreach (var quality in qualities)
+            {
+                if (quality == null)
+                {
+                    continue;
+                }
+
+                roll -= Mathf.Max(0f, quality.dropWeight);
+                if (roll <= 0f)
+                {
+                    selectedQuality = quality.quality;
+                    break;
+                }
+            }
+
+            var matchingWeapons = new List<WeaponConfig>();
+            foreach (var weapon in weapons)
+            {
+                if (weapon != null && weapon.quality == selectedQuality)
+                {
+                    matchingWeapons.Add(weapon);
+                }
+            }
+
+            return matchingWeapons.Count > 0
+                ? matchingWeapons[UnityEngine.Random.Range(0, matchingWeapons.Count)]
+                : weapons[UnityEngine.Random.Range(0, weapons.Length)];
+        }
+
+        private static string[] SplitIds(string value)
+        {
+            var rawIds = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (var i = 0; i < rawIds.Length; i++)
+            {
+                rawIds[i] = rawIds[i].Trim();
+            }
+
+            return rawIds;
+        }
+
+        public static WeaponCatalogConfig CreateDefault()
+        {
+            return new WeaponCatalogConfig
+            {
+                qualities = WeaponQualityConfig.CreateDefaults(),
+                affixes = WeaponAffixConfig.CreateDefaults(),
+                sets = WeaponSetBonusConfig.CreateDefaults(),
+                weapons = new[] { WeaponConfig.CreateDefault() },
+                forgeRecipes = WeaponForgeRecipeConfig.CreateDefaults()
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class WeaponQualityConfig
+    {
+        [XmlAttribute] public WeaponQuality quality = WeaponQuality.Common;
+        [XmlAttribute] public string displayNameKey = "weapon.quality.common";
+        [XmlAttribute] public float dropWeight = 50f;
+        [XmlAttribute] public int maxEnhancementLevel = 3;
+        [XmlAttribute] public int affixSlots;
+        [XmlAttribute] public bool setBonus;
+        [XmlAttribute] public bool passiveEffect;
+        [XmlAttribute] public bool daoRhyme;
+        public ConfigColor color = new(1f, 1f, 1f, 1f);
+
+        public static WeaponQualityConfig CreateDefault(WeaponQuality quality)
+        {
+            return quality switch
+            {
+                WeaponQuality.Spirit => new WeaponQualityConfig
+                {
+                    quality = quality,
+                    displayNameKey = "weapon.quality.spirit",
+                    dropWeight = 30f,
+                    maxEnhancementLevel = 5,
+                    affixSlots = 1,
+                    color = new ConfigColor(0.35f, 1f, 0.45f, 1f)
+                },
+                WeaponQuality.Treasure => new WeaponQualityConfig
+                {
+                    quality = quality,
+                    displayNameKey = "weapon.quality.treasure",
+                    dropWeight = 13f,
+                    maxEnhancementLevel = 7,
+                    affixSlots = 2,
+                    color = new ConfigColor(0.35f, 0.65f, 1f, 1f)
+                },
+                WeaponQuality.Immortal => new WeaponQualityConfig
+                {
+                    quality = quality,
+                    displayNameKey = "weapon.quality.immortal",
+                    dropWeight = 5f,
+                    maxEnhancementLevel = 9,
+                    affixSlots = 2,
+                    setBonus = true,
+                    color = new ConfigColor(0.78f, 0.35f, 1f, 1f)
+                },
+                WeaponQuality.Saint => new WeaponQualityConfig
+                {
+                    quality = quality,
+                    displayNameKey = "weapon.quality.saint",
+                    dropWeight = 1.5f,
+                    maxEnhancementLevel = 12,
+                    affixSlots = 3,
+                    passiveEffect = true,
+                    color = new ConfigColor(1f, 0.58f, 0.18f, 1f)
+                },
+                WeaponQuality.Dao => new WeaponQualityConfig
+                {
+                    quality = quality,
+                    displayNameKey = "weapon.quality.dao",
+                    dropWeight = 0.5f,
+                    maxEnhancementLevel = -1,
+                    affixSlots = 1,
+                    daoRhyme = true,
+                    color = new ConfigColor(1f, 0.18f, 0.22f, 1f)
+                },
+                _ => new WeaponQualityConfig()
+            };
+        }
+
+        public static WeaponQualityConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                CreateDefault(WeaponQuality.Common),
+                CreateDefault(WeaponQuality.Spirit),
+                CreateDefault(WeaponQuality.Treasure),
+                CreateDefault(WeaponQuality.Immortal),
+                CreateDefault(WeaponQuality.Saint),
+                CreateDefault(WeaponQuality.Dao)
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class WeaponAffixConfig
+    {
+        [XmlAttribute] public string id = "sharp";
+        [XmlAttribute] public string displayNameKey = "weapon.affix.sharp";
+        [XmlAttribute] public WeaponQuality minQuality = WeaponQuality.Spirit;
+        [XmlAttribute] public WeaponQuality maxQuality = WeaponQuality.Dao;
+        [XmlAttribute] public string effectType = "damage_multiplier";
+        [XmlAttribute] public float value = 0.1f;
+
+        public bool CanAppearOn(WeaponQuality quality)
+        {
+            return quality >= minQuality && quality <= maxQuality;
+        }
+
+        public static WeaponAffixConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                new WeaponAffixConfig(),
+                new WeaponAffixConfig
+                {
+                    id = "life_steal",
+                    displayNameKey = "weapon.affix.life_steal",
+                    minQuality = WeaponQuality.Treasure,
+                    effectType = "life_steal",
+                    value = 0.05f
+                },
+                new WeaponAffixConfig
+                {
+                    id = "combo",
+                    displayNameKey = "weapon.affix.combo",
+                    minQuality = WeaponQuality.Immortal,
+                    effectType = "extra_attack_chance",
+                    value = 0.15f
+                },
+                new WeaponAffixConfig
+                {
+                    id = "dao_rhyme",
+                    displayNameKey = "weapon.affix.dao_rhyme",
+                    minQuality = WeaponQuality.Dao,
+                    effectType = "enhancement_cap",
+                    value = 3f
+                }
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class WeaponSetBonusConfig
+    {
+        [XmlAttribute] public WeaponSchool school = WeaponSchool.Sword;
+        [XmlAttribute] public string twoPieceTextKey = "weapon.set.sword.two";
+        [XmlAttribute] public string threePieceTextKey = "weapon.set.sword.three";
+        [XmlAttribute] public float twoPieceDamageMultiplier = 1f;
+        [XmlAttribute] public float twoPieceFireIntervalMultiplier = 1f;
+        [XmlAttribute] public float twoPieceRangeMultiplier = 1f;
+        [XmlAttribute] public float twoPieceCritChance;
+        [XmlAttribute] public int threePieceExtraProjectiles;
+        [XmlAttribute] public int threePieceExtraChains;
+
+        public static WeaponSetBonusConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                new WeaponSetBonusConfig { twoPieceFireIntervalMultiplier = 0.8f, threePieceExtraProjectiles = 1 },
+                new WeaponSetBonusConfig
+                {
+                    school = WeaponSchool.Fire,
+                    twoPieceTextKey = "weapon.set.fire.two",
+                    threePieceTextKey = "weapon.set.fire.three",
+                    twoPieceDamageMultiplier = 1.5f,
+                    threePieceExtraProjectiles = 1
+                },
+                new WeaponSetBonusConfig
+                {
+                    school = WeaponSchool.Thunder,
+                    twoPieceTextKey = "weapon.set.thunder.two",
+                    threePieceTextKey = "weapon.set.thunder.three",
+                    twoPieceCritChance = 0.15f,
+                    threePieceExtraChains = 1
+                }
+            };
+        }
+    }
+
+    [Serializable]
+    public sealed class WeaponForgeRecipeConfig
+    {
+        [XmlAttribute] public string id = "treasure_to_immortal";
+        [XmlAttribute] public WeaponQuality inputQuality = WeaponQuality.Treasure;
+        [XmlAttribute] public int inputCount = 2;
+        [XmlAttribute] public bool requireSameSchool;
+        [XmlAttribute] public bool keepSchool;
+        [XmlAttribute] public WeaponQuality outputQuality = WeaponQuality.Immortal;
+        [XmlAttribute] public string requiredWeaponIds = string.Empty;
+        [XmlAttribute] public string resultWeaponId = string.Empty;
+
+        public bool Matches(IReadOnlyList<WeaponConfig> ingredients)
+        {
+            if (ingredients == null)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(requiredWeaponIds))
+            {
+                var requiredIds = SplitIds(requiredWeaponIds);
+                if (requiredIds.Length != ingredients.Count)
+                {
+                    return false;
+                }
+
+                foreach (var requiredId in requiredIds)
+                {
+                    var found = false;
+                    foreach (var ingredient in ingredients)
+                    {
+                        if (ingredient != null && ingredient.id == requiredId)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            if (ingredients.Count != inputCount)
+            {
+                return false;
+            }
+
+            WeaponSchool? school = null;
+            foreach (var ingredient in ingredients)
+            {
+                if (ingredient == null || ingredient.quality != inputQuality)
+                {
+                    return false;
+                }
+
+                school ??= ingredient.school;
+                if (requireSameSchool && ingredient.school != school.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static WeaponForgeRecipeConfig[] CreateDefaults()
+        {
+            return new[]
+            {
+                new WeaponForgeRecipeConfig(),
+                new WeaponForgeRecipeConfig
+                {
+                    id = "same_immortal_to_saint",
+                    inputQuality = WeaponQuality.Immortal,
+                    requireSameSchool = true,
+                    keepSchool = true,
+                    outputQuality = WeaponQuality.Saint
+                },
+                new WeaponForgeRecipeConfig
+                {
+                    id = "saint_to_dao",
+                    inputQuality = WeaponQuality.Saint,
+                    inputCount = 3,
+                    outputQuality = WeaponQuality.Dao
+                },
+                new WeaponForgeRecipeConfig
+                {
+                    id = "seven_star_zhuxian_array",
+                    requiredWeaponIds = "seven_star_sword,zhuxian_sword_array",
+                    resultWeaponId = "zhuxian_sword"
+                }
+            };
+        }
+
+        private static string[] SplitIds(string value)
+        {
+            var rawIds = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (var i = 0; i < rawIds.Length; i++)
+            {
+                rawIds[i] = rawIds[i].Trim();
+            }
+
+            return rawIds;
+        }
+    }
+
+    [Serializable]
     public sealed class WeaponConfig
     {
-        [XmlAttribute] public string nameKey = "weapon.flying_sword.name";
-        public float fireInterval = 0.45f;
-        public float range = 14f;
-        public float baseDamage = 18f;
-        public float projectileSpeed = 18f;
-        public float projectileLifetime = 2.2f;
-        public float projectileScale = 0.28f;
+        [XmlAttribute] public string id = "iron_sword";
+        [XmlAttribute] public string nameKey = "weapon.iron_sword.name";
+        [XmlAttribute] public WeaponSchool school = WeaponSchool.Sword;
+        [XmlAttribute] public WeaponQuality quality = WeaponQuality.Common;
+        [XmlAttribute] public WeaponAttackPattern attackPattern = WeaponAttackPattern.Projectile;
+        [XmlAttribute] public WeaponTargetMode targetMode = WeaponTargetMode.Nearest;
+        [XmlAttribute] public float fireInterval = 0.83f;
+        [XmlAttribute] public float range = 14f;
+        [XmlAttribute] public float baseDamage = 18f;
+        [XmlAttribute] public float projectileSpeed = 18f;
+        [XmlAttribute] public float projectileLifetime = 2.2f;
+        [XmlAttribute] public float projectileScale = 0.28f;
+        [XmlAttribute] public int projectileCount = 1;
+        [XmlAttribute] public float spreadAngle;
+        [XmlAttribute] public int targetCount = 1;
+        [XmlAttribute] public float hitRadius = 1f;
+        [XmlAttribute] public float coneAngle = 60f;
+        [XmlAttribute] public int maxProjectileHits = 1;
+        [XmlAttribute] public int chainCount;
+        [XmlAttribute] public float experienceGainBonus;
+        [XmlAttribute] public float healthRegenPercentPerSecond;
         public ConfigColor projectileColor = new(0.8f, 0.95f, 1f, 1f);
 
         public static WeaponConfig CreateDefault()
@@ -529,6 +1162,7 @@ namespace Tribulation.Config
         [XmlAttribute] public string titleKey = "upgrade.spirit_power.title";
         [XmlAttribute] public string descriptionKey = "upgrade.damage_multiplier.description";
         [XmlAttribute] public string effectType = "damage_multiplier";
+        [XmlAttribute] public string weaponId = string.Empty;
         [XmlAttribute] public float value = 0.1f;
 
         public static UpgradeOptionConfig[] CreateDefaults()

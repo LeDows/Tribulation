@@ -5,4 +5,12 @@
   <upgrade id="cloud_step" titleKey="upgrade.cloud_step.title" descriptionKey="upgrade.move_speed.description" effectType="move_speed" value="0.35" />
   <upgrade id="sharpened_sword" titleKey="upgrade.sharpened_sword.title" descriptionKey="upgrade.weapon_damage.description" effectType="weapon_damage" value="6" />
   <upgrade id="quickened_blade" titleKey="upgrade.quickened_blade.title" descriptionKey="upgrade.weapon_fire_rate.description" effectType="weapon_fire_rate" value="0.12" />
+  <upgrade id="temper_weapon" titleKey="upgrade.temper_weapon.title" descriptionKey="upgrade.enhance_weapon.description" effectType="enhance_weapon" value="1" />
+  <upgrade id="find_weapon" titleKey="upgrade.find_weapon.title" descriptionKey="upgrade.random_weapon.description" effectType="random_weapon" value="0" />
+  <upgrade id="learn_fireball" titleKey="upgrade.learn_fireball.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="fireball" value="0" />
+  <upgrade id="learn_thunder_call" titleKey="upgrade.learn_thunder_call.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="thunder_call" value="0" />
+  <upgrade id="learn_poison_needle" titleKey="upgrade.learn_poison_needle.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="poison_needle" value="0" />
+  <upgrade id="learn_iron_fist" titleKey="upgrade.learn_iron_fist.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="iron_fist" value="0" />
+  <upgrade id="learn_spirit_array" titleKey="upgrade.learn_spirit_array.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="spirit_gathering_array" value="0" />
+  <upgrade id="learn_water_bolt" titleKey="upgrade.learn_water_bolt.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="water_bolt" value="0" />
 </upgrades>

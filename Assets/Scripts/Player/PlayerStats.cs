@@ -39,6 +39,7 @@ namespace Tribulation.Player
         private float bonusMoveSpeed;
         private float bonusMaxHealth;
         private float bonusDamageMultiplier;
+        private float bonusExperienceGainMultiplier;
         private float experienceRemainder;
         private int allocatedSpiritPower;
         private int allocatedDivineSense;
@@ -86,6 +87,7 @@ namespace Tribulation.Player
             bonusMoveSpeed = 0f;
             bonusMaxHealth = 0f;
             bonusDamageMultiplier = 0f;
+            bonusExperienceGainMultiplier = 0f;
 
             allocatedSpiritPower = 0;
             allocatedDivineSense = 0;
@@ -227,6 +229,12 @@ namespace Tribulation.Player
             RecalculateDerivedStats(false);
         }
 
+        public void AddExperienceGainMultiplier(float amount)
+        {
+            bonusExperienceGainMultiplier += amount;
+            RecalculateDerivedStats(false);
+        }
+
         private void LevelUp()
         {
             Level = Mathf.Min(cultivationConfig.maxLevel, Level + 1);
@@ -323,7 +331,7 @@ namespace Tribulation.Player
             DamageMultiplier = Mathf.Max(0f, baseDamageMultiplier + bonusDamageMultiplier + SpiritPower * spiritPowerEffect.damageMultiplier);
             CritChance = Mathf.Clamp01(DivineSense * divineSenseEffect.critChance);
             PickupRadiusBonus = Mathf.Max(0f, DivineSense * divineSenseEffect.pickupRadius);
-            ExperienceGainMultiplier = Mathf.Max(0f, 1f + Insight * insightEffect.experienceGain);
+            ExperienceGainMultiplier = Mathf.Max(0f, 1f + bonusExperienceGainMultiplier + Insight * insightEffect.experienceGain);
             RareRewardChanceBonus = Mathf.Max(0f, Fortune * fortuneEffect.rareRewardChance);
             DamageReduction = Mathf.Clamp(Will * willEffect.damageReduction, 0f, cultivationConfig.maxDamageReduction);
 

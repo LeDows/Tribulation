@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using Tribulation.Core;
 using Tribulation.Config;
@@ -237,6 +238,17 @@ namespace Tribulation.UI
                 return Mathf.RoundToInt(option.value * 100f);
             }
 
+            if (effectType == "equip_weapon" || effectType == "enhance_weapon")
+            {
+                var weapon = ConfigCenter.Weapon.FindWeapon(option.weaponId);
+                return weapon != null ? ConfigCenter.Text(weapon.nameKey) : option.weaponId;
+            }
+
+            if (effectType == "random_weapon")
+            {
+                return ConfigCenter.Text("upgrade.random_weapon.value");
+            }
+
             return option.value;
         }
 
@@ -330,7 +342,7 @@ namespace Tribulation.UI
 
         private static string FormatWeaponStats(AutoWeapon weapon)
         {
-            if (weapon == null)
+            if (weapon == null || !weapon.HasAnyWeapon)
             {
                 return string.Join(
                     "\n",
@@ -338,19 +350,40 @@ namespace Tribulation.UI
                     FormatHudLine("ui.hud.weapon_name_label", ConfigCenter.Text("ui.common.none")));
             }
 
-            var shotsPerSecond = weapon.FireInterval > 0f ? 1f / weapon.FireInterval : 0f;
-            return string.Join(
-                "\n",
+            var lines = new List<string>
+            {
                 ConfigCenter.Text("ui.hud.weapon_title"),
-                FormatHudLine("ui.hud.weapon_name_label", weapon.ProjectileName),
-                FormatHudLine("ui.hud.actual_damage_label", FormatDecimal(weapon.CurrentDamage, "0.0")),
-                FormatHudLine("ui.hud.base_damage_label", FormatDecimal(weapon.BaseDamage, "0.0")),
-                FormatHudLine("ui.hud.cooldown_label", FormatSeconds(weapon.FireInterval)),
-                FormatHudLine("ui.hud.fire_rate_label", FormatPerSecond(shotsPerSecond)),
-                FormatHudLine("ui.hud.range_label", FormatDecimal(weapon.Range, "0.0")),
-                FormatHudLine("ui.hud.projectile_speed_label", FormatDecimal(weapon.ProjectileSpeed, "0.0")),
-                FormatHudLine("ui.hud.projectile_scale_label", FormatDecimal(weapon.ProjectileScale, "0.00")),
-                FormatHudLine("ui.hud.projectile_lifetime_label", FormatSeconds(weapon.ProjectileLifetime)));
+                FormatHudLine(
+                    "ui.hud.weapon_slots_label",
+                    ConfigCenter.Text("ui.hud.weapon_slots_value", weapon.EquippedCount, weapon.MaxEquippedWeapons))
+            };
+
+            foreach (var view in weapon.GetEquippedWeaponViews())
+            {
+                lines.Add(ConfigCenter.Text(
+                    "ui.hud.weapon_summary",
+                    view.QualityName,
+                    view.Name,
+                    view.EnhancementLevel,
+                    view.SchoolName,
+                    FormatDecimal(view.CurrentDamage, "0.0"),
+                    FormatSeconds(view.FireInterval),
+                    FormatDecimal(view.Range, "0.0")));
+
+                if (!string.IsNullOrWhiteSpace(view.Affixes))
+                {
+                    lines.Add(FormatHudLine("ui.hud.weapon_affixes_label", view.Affixes));
+                }
+
+                if (view.SetPieceCount >= 2)
+                {
+                    lines.Add(FormatHudLine(
+                        "ui.hud.weapon_set_label",
+                        ConfigCenter.Text("ui.hud.weapon_set_value", view.SchoolName, view.SetPieceCount)));
+                }
+            }
+
+            return string.Join("\n", lines);
         }
 
         private static string FormatCharacterStats(PlayerStats player)

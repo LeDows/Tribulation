@@ -1,10 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
-<weapon nameKey="weapon.flying_sword.name">
-  <fireInterval>0.45</fireInterval>
-  <range>14</range>
-  <baseDamage>18</baseDamage>
-  <projectileSpeed>18</projectileSpeed>
-  <projectileLifetime>2.2</projectileLifetime>
-  <projectileScale>0.28</projectileScale>
-  <projectileColor r="0.8" g="0.95" b="1" a="1" />
+<weapon maxEquipped="3" defaultWeaponIds="iron_sword" enhancementDamageBonusPerLevel="0.1" enhancementCooldownReductionPerLevel="0.02">
+  <qualities>
+    <quality quality="Common" displayNameKey="weapon.quality.common" dropWeight="50" maxEnhancementLevel="3" affixSlots="0" setBonus="false" passiveEffect="false" daoRhyme="false">
+      <color r="1" g="1" b="1" a="1" />
+    </quality>
+    <quality quality="Spirit" displayNameKey="weapon.quality.spirit" dropWeight="30" maxEnhancementLevel="5" affixSlots="1" setBonus="false" passiveEffect="false" daoRhyme="false">
+      <color r="0.35" g="1" b="0.45" a="1" />
+    </quality>
+    <quality quality="Treasure" displayNameKey="weapon.quality.treasure" dropWeight="13" maxEnhancementLevel="7" affixSlots="2" setBonus="false" passiveEffect="false" daoRhyme="false">
+      <color r="0.35" g="0.65" b="1" a="1" />
+    </quality>
+    <quality quality="Immortal" displayNameKey="weapon.quality.immortal" dropWeight="5" maxEnhancementLevel="9" affixSlots="2" setBonus="true" passiveEffect="false" daoRhyme="false">
+      <color r="0.78" g="0.35" b="1" a="1" />
+    </quality>
+    <quality quality="Saint" displayNameKey="weapon.quality.saint" dropWeight="1.5" maxEnhancementLevel="12" affixSlots="3" setBonus="true" passiveEffect="true" daoRhyme="false">
+      <color r="1" g="0.58" b="0.18" a="1" />
+    </quality>
+    <quality quality="Dao" displayNameKey="weapon.quality.dao" dropWeight="0.5" maxEnhancementLevel="-1" affixSlots="1" setBonus="true" passiveEffect="true" daoRhyme="true">
+      <color r="1" g="0.18" b="0.22" a="1" />
+    </quality>
+  </qualities>
+
+  <affixes>
+    <affix id="sharp" displayNameKey="weapon.affix.sharp" minQuality="Spirit" maxQuality="Dao" effectType="damage_multiplier" value="0.1" />
+    <affix id="life_steal" displayNameKey="weapon.affix.life_steal" minQuality="Treasure" maxQuality="Dao" effectType="life_steal" value="0.05" />
+    <affix id="armor_break" displayNameKey="weapon.affix.armor_break" minQuality="Treasure" maxQuality="Dao" effectType="armor_break" value="0.1" />
+    <affix id="combo" displayNameKey="weapon.affix.combo" minQuality="Immortal" maxQuality="Dao" effectType="extra_attack_chance" value="0.15" />
+    <affix id="deadly" displayNameKey="weapon.affix.deadly" minQuality="Immortal" maxQuality="Dao" effectType="crit_damage" value="0.5" />
+    <affix id="greed" displayNameKey="weapon.affix.greed" minQuality="Treasure" maxQuality="Dao" effectType="extra_drop" value="0.3" />
+    <affix id="symbiosis" displayNameKey="weapon.affix.symbiosis" minQuality="Saint" maxQuality="Dao" effectType="low_health_fire_rate" value="0.45" />
+    <affix id="heaven_punishment" displayNameKey="weapon.affix.heaven_punishment" minQuality="Saint" maxQuality="Dao" effectType="elite_damage" value="0.25" />
+    <affix id="wuxiang" displayNameKey="weapon.affix.wuxiang" minQuality="Dao" maxQuality="Dao" effectType="random_property" value="1" />
+    <affix id="dao_rhyme" displayNameKey="weapon.affix.dao_rhyme" minQuality="Dao" maxQuality="Dao" effectType="enhancement_cap" value="3" />
+  </affixes>
+
+  <sets>
+    <set school="Sword" twoPieceTextKey="weapon.set.sword.two" threePieceTextKey="weapon.set.sword.three" twoPieceFireIntervalMultiplier="0.8" threePieceExtraProjectiles="1" />
+    <set school="Fire" twoPieceTextKey="weapon.set.fire.two" threePieceTextKey="weapon.set.fire.three" twoPieceDamageMultiplier="1.5" threePieceExtraProjectiles="1" />
+    <set school="Thunder" twoPieceTextKey="weapon.set.thunder.two" threePieceTextKey="weapon.set.thunder.three" twoPieceCritChance="0.15" threePieceExtraChains="1" />
+    <set school="Poison" twoPieceTextKey="weapon.set.poison.two" threePieceTextKey="weapon.set.poison.three" twoPieceDamageMultiplier="1.3" />
+    <set school="Body" twoPieceTextKey="weapon.set.body.two" threePieceTextKey="weapon.set.body.three" twoPieceDamageMultiplier="1.2" />
+    <set school="Formation" twoPieceTextKey="weapon.set.formation.two" threePieceTextKey="weapon.set.formation.three" twoPieceRangeMultiplier="1.3" />
+    <set school="Water" twoPieceTextKey="weapon.set.water.two" threePieceTextKey="weapon.set.water.three" twoPieceDamageMultiplier="1.0" />
+  </sets>
+
+  <weapons>
+    <weapon id="iron_sword" nameKey="weapon.iron_sword.name" school="Sword" quality="Common" attackPattern="Projectile" targetMode="Nearest" fireInterval="0.83" range="14" baseDamage="18" projectileSpeed="18" projectileLifetime="2.2" projectileScale="0.28" projectileCount="1" maxProjectileHits="1">
+      <projectileColor r="0.8" g="0.95" b="1" a="1" />
+    </weapon>
+    <weapon id="qingfeng_sword" nameKey="weapon.qingfeng_sword.name" school="Sword" quality="Spirit" attackPattern="BurstProjectiles" targetMode="Nearest" fireInterval="1" range="14" baseDamage="23.4" projectileSpeed="18" projectileLifetime="2.2" projectileScale="0.25" projectileCount="3" spreadAngle="18" maxProjectileHits="1">
+      <projectileColor r="0.55" g="1" b="0.82" a="1" />
+    </weapon>
+    <weapon id="black_iron_greatsword" nameKey="weapon.black_iron_greatsword.name" school="Sword" quality="Treasure" attackPattern="Cone" targetMode="Nearest" fireInterval="2" range="6" baseDamage="45" coneAngle="85" hitRadius="3">
+      <projectileColor r="0.35" g="0.48" b="0.62" a="1" />
+    </weapon>
+    <weapon id="seven_star_sword" nameKey="weapon.seven_star_sword.name" school="Sword" quality="Immortal" attackPattern="BurstProjectiles" targetMode="Nearest" fireInterval="0.8" range="14" baseDamage="14.4" projectileSpeed="16" projectileLifetime="2.5" projectileScale="0.22" projectileCount="7" spreadAngle="360" maxProjectileHits="1">
+      <projectileColor r="0.78" g="0.72" b="1" a="1" />
+    </weapon>
+    <weapon id="taixu_sword" nameKey="weapon.taixu_sword.name" school="Sword" quality="Saint" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="6" baseDamage="9" hitRadius="6">
+      <projectileColor r="1" g="0.72" b="0.38" a="1" />
+    </weapon>
+    <weapon id="zhuxian_sword" nameKey="weapon.zhuxian_sword.name" school="Sword" quality="Dao" attackPattern="Projectile" targetMode="Strongest" fireInterval="3.33" range="40" baseDamage="144" projectileSpeed="35" projectileLifetime="3" projectileScale="0.5" projectileCount="1" maxProjectileHits="20">
+      <projectileColor r="1" g="0.08" b="0.12" a="1" />
+    </weapon>
+
+    <weapon id="fireball" nameKey="weapon.fireball.name" school="Fire" quality="Common" attackPattern="Projectile" targetMode="Random" fireInterval="1" range="13" baseDamage="21.6" projectileSpeed="13" projectileLifetime="2.4" projectileScale="0.34" projectileCount="1" hitRadius="2">
+      <projectileColor r="1" g="0.32" b="0.12" a="1" />
+    </weapon>
+    <weapon id="samadhi_fire" nameKey="weapon.samadhi_fire.name" school="Fire" quality="Spirit" attackPattern="Cone" targetMode="Nearest" fireInterval="0.35" range="6" baseDamage="10.8" coneAngle="50" hitRadius="3">
+      <projectileColor r="1" g="0.45" b="0.1" a="1" />
+    </weapon>
+    <weapon id="burning_lotus" nameKey="weapon.burning_lotus.name" school="Fire" quality="Treasure" attackPattern="AreaAtTarget" targetMode="Random" fireInterval="2.2" range="14" baseDamage="54" hitRadius="4">
+      <projectileColor r="1" g="0.18" b="0.32" a="1" />
+    </weapon>
+    <weapon id="vermillion_wings" nameKey="weapon.vermillion_wings.name" school="Fire" quality="Immortal" attackPattern="BurstProjectiles" targetMode="Nearest" fireInterval="1.2" range="12" baseDamage="27" projectileSpeed="15" projectileLifetime="2.2" projectileScale="0.3" projectileCount="4" spreadAngle="360">
+      <projectileColor r="1" g="0.28" b="0.05" a="1" />
+    </weapon>
+    <weapon id="sun_fire" nameKey="weapon.sun_fire.name" school="Fire" quality="Saint" attackPattern="BurstProjectiles" targetMode="Strongest" fireInterval="1.4" range="16" baseDamage="36" projectileSpeed="18" projectileLifetime="2.6" projectileScale="0.36" projectileCount="3" spreadAngle="28">
+      <projectileColor r="1" g="0.72" b="0.18" a="1" />
+    </weapon>
+    <weapon id="karma_lotus" nameKey="weapon.karma_lotus.name" school="Fire" quality="Dao" attackPattern="Aura" targetMode="Nearest" fireInterval="1.5" range="5" baseDamage="54" hitRadius="5">
+      <projectileColor r="1" g="0.05" b="0.08" a="1" />
+    </weapon>
+
+    <weapon id="thunder_call" nameKey="weapon.thunder_call.name" school="Thunder" quality="Common" attackPattern="Lightning" targetMode="Nearest" fireInterval="1.2" range="14" baseDamage="27" targetCount="1" chainCount="1">
+      <projectileColor r="0.75" g="0.9" b="1" a="1" />
+    </weapon>
+    <weapon id="five_thunder" nameKey="weapon.five_thunder.name" school="Thunder" quality="Spirit" attackPattern="Lightning" targetMode="Nearest" fireInterval="1.8" range="15" baseDamage="18" targetCount="5">
+      <projectileColor r="0.48" g="0.75" b="1" a="1" />
+    </weapon>
+    <weapon id="purple_thunder" nameKey="weapon.purple_thunder.name" school="Thunder" quality="Treasure" attackPattern="Lightning" targetMode="Strongest" fireInterval="3" range="16" baseDamage="72" targetCount="1">
+      <projectileColor r="0.62" g="0.38" b="1" a="1" />
+    </weapon>
+    <weapon id="thunder_hammer" nameKey="weapon.thunder_hammer.name" school="Thunder" quality="Immortal" attackPattern="Cone" targetMode="Nearest" fireInterval="1.8" range="7" baseDamage="45" coneAngle="80" hitRadius="4">
+      <projectileColor r="0.6" g="0.72" b="1" a="1" />
+    </weapon>
+    <weapon id="heaven_thunder" nameKey="weapon.heaven_thunder.name" school="Thunder" quality="Saint" attackPattern="Lightning" targetMode="Strongest" fireInterval="1.4" range="18" baseDamage="54" targetCount="1" chainCount="2">
+      <projectileColor r="1" g="0.9" b="0.35" a="1" />
+    </weapon>
+    <weapon id="chaos_thunder" nameKey="weapon.chaos_thunder.name" school="Thunder" quality="Dao" attackPattern="Lightning" targetMode="Strongest" fireInterval="3.3" range="25" baseDamage="180" targetCount="1" chainCount="3">
+      <projectileColor r="0.36" g="0.06" b="0.75" a="1" />
+    </weapon>
+
+    <weapon id="poison_needle" nameKey="weapon.poison_needle.name" school="Poison" quality="Common" attackPattern="Projectile" targetMode="Nearest" fireInterval="0.5" range="12" baseDamage="9" projectileSpeed="17" projectileLifetime="2" projectileScale="0.18">
+      <projectileColor r="0.45" g="1" b="0.22" a="1" />
+    </weapon>
+    <weapon id="heart_gu" nameKey="weapon.heart_gu.name" school="Poison" quality="Spirit" attackPattern="Lightning" targetMode="Strongest" fireInterval="0.35" range="12" baseDamage="3.6" targetCount="1">
+      <projectileColor r="0.28" g="0.9" b="0.2" a="1" />
+    </weapon>
+    <weapon id="seven_step_poison" nameKey="weapon.seven_step_poison.name" school="Poison" quality="Treasure" attackPattern="Cone" targetMode="Nearest" fireInterval="0.4" range="6" baseDamage="9" coneAngle="75" hitRadius="4">
+      <projectileColor r="0.22" g="0.75" b="0.18" a="1" />
+    </weapon>
+    <weapon id="hundred_poison_body" nameKey="weapon.hundred_poison_body.name" school="Poison" quality="Immortal" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="4" baseDamage="7.2" hitRadius="4">
+      <projectileColor r="0.6" g="0.2" b="0.82" a="1" />
+    </weapon>
+    <weapon id="gu_king" nameKey="weapon.gu_king.name" school="Poison" quality="Saint" attackPattern="Projectile" targetMode="Strongest" fireInterval="1" range="14" baseDamage="36" projectileSpeed="12" projectileLifetime="3" projectileScale="0.4" maxProjectileHits="3">
+      <projectileColor r="0.16" g="0.55" b="0.16" a="1" />
+    </weapon>
+    <weapon id="silkworm_gu" nameKey="weapon.silkworm_gu.name" school="Poison" quality="Dao" attackPattern="AreaAtTarget" targetMode="Strongest" fireInterval="1" range="15" baseDamage="18" hitRadius="5">
+      <projectileColor r="0.85" g="1" b="0.72" a="1" />
+    </weapon>
+
+    <weapon id="iron_fist" nameKey="weapon.iron_fist.name" school="Body" quality="Common" attackPattern="Cone" targetMode="Nearest" fireInterval="0.7" range="2.4" baseDamage="27" coneAngle="100" hitRadius="2.4">
+      <projectileColor r="0.82" g="0.72" b="0.62" a="1" />
+    </weapon>
+    <weapon id="diamond_body" nameKey="weapon.diamond_body.name" school="Body" quality="Spirit" attackPattern="Aura" targetMode="Nearest" fireInterval="1.3" range="3" baseDamage="9" hitRadius="3">
+      <projectileColor r="1" g="0.92" b="0.55" a="1" />
+    </weapon>
+    <weapon id="dragon_elephant" nameKey="weapon.dragon_elephant.name" school="Body" quality="Treasure" attackPattern="Cone" targetMode="Nearest" fireInterval="1.6" range="7" baseDamage="54" coneAngle="70" hitRadius="4">
+      <projectileColor r="0.9" g="0.58" b="0.34" a="1" />
+    </weapon>
+    <weapon id="immortal_golden_body" nameKey="weapon.immortal_golden_body.name" school="Body" quality="Immortal" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="4" baseDamage="36" hitRadius="4" healthRegenPercentPerSecond="0.005">
+      <projectileColor r="1" g="0.78" b="0.28" a="1" />
+    </weapon>
+    <weapon id="pangu_open_heaven" nameKey="weapon.pangu_open_heaven.name" school="Body" quality="Saint" attackPattern="Cone" targetMode="Strongest" fireInterval="3" range="8" baseDamage="144" coneAngle="90" hitRadius="5">
+      <projectileColor r="1" g="0.5" b="0.18" a="1" />
+    </weapon>
+    <weapon id="body_saint" nameKey="weapon.body_saint.name" school="Body" quality="Dao" attackPattern="Aura" targetMode="Nearest" fireInterval="0.33" range="3.5" baseDamage="36" hitRadius="3.5">
+      <projectileColor r="1" g="0.22" b="0.16" a="1" />
+    </weapon>
+
+    <weapon id="spirit_gathering_array" nameKey="weapon.spirit_gathering_array.name" school="Formation" quality="Common" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="0" baseDamage="0" hitRadius="0.1" experienceGainBonus="0.5">
+      <projectileColor r="0.4" g="1" b="0.65" a="1" />
+    </weapon>
+    <weapon id="trapping_array" nameKey="weapon.trapping_array.name" school="Formation" quality="Spirit" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="5" baseDamage="3" hitRadius="5">
+      <projectileColor r="0.55" g="0.95" b="1" a="1" />
+    </weapon>
+    <weapon id="big_dipper_array" nameKey="weapon.big_dipper_array.name" school="Formation" quality="Treasure" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="6" baseDamage="18" hitRadius="6">
+      <projectileColor r="0.35" g="0.5" b="1" a="1" />
+    </weapon>
+    <weapon id="zhuxian_sword_array" nameKey="weapon.zhuxian_sword_array.name" school="Formation" quality="Immortal" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="7" baseDamage="36" hitRadius="7">
+      <projectileColor r="0.85" g="0.35" b="1" a="1" />
+    </weapon>
+    <weapon id="heaven_earth_array" nameKey="weapon.heaven_earth_array.name" school="Formation" quality="Saint" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="30" baseDamage="27" hitRadius="30">
+      <projectileColor r="1" g="0.72" b="0.28" a="1" />
+    </weapon>
+    <weapon id="hunyuan_array" nameKey="weapon.hunyuan_array.name" school="Formation" quality="Dao" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="35" baseDamage="36" hitRadius="35">
+      <projectileColor r="1" g="0.12" b="0.28" a="1" />
+    </weapon>
+
+    <weapon id="water_bolt" nameKey="weapon.water_bolt.name" school="Water" quality="Common" attackPattern="Projectile" targetMode="Nearest" fireInterval="0.8" range="13" baseDamage="14.4" projectileSpeed="15" projectileLifetime="2.2" projectileScale="0.3">
+      <projectileColor r="0.35" g="0.72" b="1" a="1" />
+    </weapon>
+    <weapon id="ice_heart" nameKey="weapon.ice_heart.name" school="Water" quality="Spirit" attackPattern="Lightning" targetMode="Nearest" fireInterval="2" range="14" baseDamage="18" targetCount="1">
+      <projectileColor r="0.72" g="0.95" b="1" a="1" />
+    </weapon>
+    <weapon id="ice_python" nameKey="weapon.ice_python.name" school="Water" quality="Treasure" attackPattern="Projectile" targetMode="Strongest" fireInterval="1.5" range="15" baseDamage="36" projectileSpeed="12" projectileLifetime="3" projectileScale="0.45" maxProjectileHits="4">
+      <projectileColor r="0.62" g="0.9" b="1" a="1" />
+    </weapon>
+    <weapon id="tianyi_water" nameKey="weapon.tianyi_water.name" school="Water" quality="Immortal" attackPattern="Aura" targetMode="Nearest" fireInterval="1" range="0" baseDamage="0" hitRadius="0.1" healthRegenPercentPerSecond="0.01">
+      <projectileColor r="0.42" g="1" b="0.95" a="1" />
+    </weapon>
+    <weapon id="northern_cold_domain" nameKey="weapon.northern_cold_domain.name" school="Water" quality="Saint" attackPattern="Aura" targetMode="Nearest" fireInterval="1.5" range="20" baseDamage="18" hitRadius="20">
+      <projectileColor r="0.45" g="0.85" b="1" a="1" />
+    </weapon>
+    <weapon id="heavenly_river" nameKey="weapon.heavenly_river.name" school="Water" quality="Dao" attackPattern="Aura" targetMode="Nearest" fireInterval="3" range="25" baseDamage="90" hitRadius="25">
+      <projectileColor r="0.12" g="0.45" b="1" a="1" />
+    </weapon>
+  </weapons>
+
+  <forgeRecipes>
+    <recipe id="treasure_to_immortal" inputQuality="Treasure" inputCount="2" outputQuality="Immortal" />
+    <recipe id="same_immortal_to_saint" inputQuality="Immortal" inputCount="2" requireSameSchool="true" keepSchool="true" outputQuality="Saint" />
+    <recipe id="saint_to_dao" inputQuality="Saint" inputCount="3" outputQuality="Dao" />
+    <recipe id="seven_star_zhuxian_array" requiredWeaponIds="seven_star_sword,zhuxian_sword_array" resultWeaponId="zhuxian_sword" />
+  </forgeRecipes>
 </weapon>

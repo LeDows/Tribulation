@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Tribulation.Config;
 using Tribulation.Combat;
 using Tribulation.Enemies;
@@ -178,7 +179,6 @@ namespace Tribulation.Core
                 return;
             }
 
-            RefreshActiveProjectileDamage(Player.GetComponent<AutoWeapon>());
             ShowNextLevelUpStep();
         }
 
@@ -293,25 +293,58 @@ namespace Tribulation.Core
                 pool = UpgradeOptionConfig.CreateDefaults();
             }
 
-            var count = Mathf.Min(3, pool.Length);
+            var weapon = Player != null ? Player.GetComponent<AutoWeapon>() : null;
+            var availableOptions = new List<UpgradeOptionConfig>();
+            foreach (var option in pool)
+            {
+                if (IsUpgradeOptionAvailable(option, weapon))
+                {
+                    availableOptions.Add(option);
+                }
+            }
+
+            if (availableOptions.Count == 0)
+            {
+                availableOptions.AddRange(pool);
+            }
+
+            var count = Mathf.Min(3, availableOptions.Count);
             var selected = new UpgradeOptionConfig[count];
-            var used = new bool[pool.Length];
+            var used = new bool[availableOptions.Count];
 
             for (var i = 0; i < count; i++)
             {
-                var index = Random.Range(0, pool.Length);
+                var index = Random.Range(0, availableOptions.Count);
                 var guard = 0;
-                while (used[index] && guard < pool.Length * 2)
+                while (used[index] && guard < availableOptions.Count * 2)
                 {
-                    index = Random.Range(0, pool.Length);
+                    index = Random.Range(0, availableOptions.Count);
                     guard++;
                 }
 
                 used[index] = true;
-                selected[i] = pool[index];
+                selected[i] = availableOptions[index];
             }
 
             return selected;
+        }
+
+        private static bool IsUpgradeOptionAvailable(UpgradeOptionConfig option, AutoWeapon weapon)
+        {
+            if (option == null)
+            {
+                return false;
+            }
+
+            var effectType = option.effectType?.Trim().ToLowerInvariant();
+            if (effectType == "equip_weapon" || effectType == "random_weapon" || effectType == "enhance_weapon" ||
+                effectType == "weapon_damage" || effectType == "weapon_fire_rate" || effectType == "weapon_range" ||
+                effectType == "projectile_speed" || effectType == "projectile_scale")
+            {
+                return weapon != null && weapon.CanApplyUpgrade(option);
+            }
+
+            return true;
         }
 
         private void ApplyUpgradeOption(UpgradeOptionConfig option)
@@ -351,23 +384,35 @@ namespace Tribulation.Core
                     break;
                 case "damage_multiplier":
                     Player.AddDamageMultiplier(option.value);
-                    RefreshActiveProjectileDamage(weapon);
                     break;
                 case "weapon_damage":
+                    applied = weapon != null;
                     weapon?.AddBaseDamage(option.value);
-                    RefreshActiveProjectileDamage(weapon);
                     break;
                 case "weapon_fire_rate":
+                    applied = weapon != null;
                     weapon?.ReduceFireIntervalPercent(option.value);
                     break;
                 case "weapon_range":
+                    applied = weapon != null;
                     weapon?.AddRange(option.value);
                     break;
                 case "projectile_speed":
+                    applied = weapon != null;
                     weapon?.AddProjectileSpeed(option.value);
                     break;
                 case "projectile_scale":
+                    applied = weapon != null;
                     weapon?.AddProjectileScale(option.value);
+                    break;
+                case "equip_weapon":
+                    applied = weapon != null && weapon.EquipWeapon(option.weaponId);
+                    break;
+                case "random_weapon":
+                    applied = weapon != null && weapon.EquipRandomWeapon();
+                    break;
+                case "enhance_weapon":
+                    applied = weapon != null && weapon.EnhanceWeapon(option.weaponId, Mathf.Max(1, Mathf.RoundToInt(option.value)));
                     break;
                 default:
                     applied = false;
@@ -379,19 +424,6 @@ namespace Tribulation.Core
             {
                 LastUpgradeSummary = ConfigCenter.Text(option.titleKey);
                 Debug.Log($"Applied upgrade '{option.id}' ({effectType}) value={option.value}.", this);
-            }
-        }
-
-        private void RefreshActiveProjectileDamage(AutoWeapon weapon)
-        {
-            if (weapon == null || runRoot == null)
-            {
-                return;
-            }
-
-            foreach (var projectile in runRoot.GetComponentsInChildren<Projectile>())
-            {
-                projectile.SetDamage(weapon.CurrentDamage);
             }
         }
 

@@ -21,7 +21,7 @@ namespace Tribulation.Config
         public static CultivationConfig Cultivation => Data.Cultivation;
         public static LevelConfig Level => Data.Level;
         public static MapConfig[] Maps => Data.Maps;
-        public static WeaponConfig Weapon => Data.Weapon;
+        public static WeaponCatalogConfig Weapon => Data.Weapon;
         public static PickupConfig Pickup => Data.Pickup;
         public static UpgradeOptionConfig[] Upgrades => Data.Upgrades;
 
@@ -122,7 +122,7 @@ namespace Tribulation.Config
             var maps = LoadXml("maps", MapConfigList.CreateDefault).items ?? Array.Empty<MapConfig>();
             var cultivation = LoadXml("cultivation", CultivationConfig.CreateDefault);
             var level = LoadXml("level", LevelConfig.CreateDefault);
-            var weapon = LoadXml("weapon", WeaponConfig.CreateDefault);
+            var weapon = LoadXml("weapon", WeaponCatalogConfig.CreateDefault);
             var pickup = LoadXml("pickup", PickupConfig.CreateDefault);
             var upgrades = LoadXml("upgrades", UpgradeOptionConfigList.CreateDefault).items ?? Array.Empty<UpgradeOptionConfig>();
 
@@ -197,7 +197,7 @@ namespace Tribulation.Config
             public readonly MapConfig[] Maps;
             public readonly CultivationConfig Cultivation;
             public readonly LevelConfig Level;
-            public readonly WeaponConfig Weapon;
+            public readonly WeaponCatalogConfig Weapon;
             public readonly PickupConfig Pickup;
             public readonly UpgradeOptionConfig[] Upgrades;
             public readonly Dictionary<string, string> ActiveLocalization;
@@ -213,7 +213,7 @@ namespace Tribulation.Config
                 MapConfig[] maps,
                 CultivationConfig cultivation,
                 LevelConfig level,
-                WeaponConfig weapon,
+                WeaponCatalogConfig weapon,
                 PickupConfig pickup,
                 UpgradeOptionConfig[] upgrades,
                 Dictionary<string, string> activeLocalization,
