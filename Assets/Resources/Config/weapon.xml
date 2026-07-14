@@ -64,7 +64,7 @@
       <projectileColor r="1" g="0.08" b="0.12" a="1" />
     </weapon>
 
-    <weapon id="fireball" nameKey="weapon.fireball.name" school="Fire" quality="Common" attackPattern="Projectile" targetMode="Random" fireInterval="1" range="13" baseDamage="21.6" projectileSpeed="13" projectileLifetime="2.4" projectileScale="0.34" projectileCount="1" hitRadius="2">
+    <weapon id="fireball" nameKey="weapon.fireball.name" school="Fire" quality="Common" attackPattern="Projectile" targetMode="Random" fireInterval="1" range="13" baseDamage="21.6" projectileSpeed="13" projectileLifetime="2.4" projectileScale="0.34" projectileCount="1" hitRadius="2" areaOnImpact="true">
       <projectileColor r="1" g="0.32" b="0.12" a="1" />
     </weapon>
     <weapon id="samadhi_fire" nameKey="weapon.samadhi_fire.name" school="Fire" quality="Spirit" attackPattern="Cone" targetMode="Nearest" fireInterval="0.35" range="6" baseDamage="10.8" coneAngle="50" hitRadius="3">
@@ -102,7 +102,7 @@
       <projectileColor r="0.36" g="0.06" b="0.75" a="1" />
     </weapon>
 
-    <weapon id="poison_needle" nameKey="weapon.poison_needle.name" school="Poison" quality="Common" attackPattern="Projectile" targetMode="Nearest" fireInterval="0.5" range="12" baseDamage="9" projectileSpeed="17" projectileLifetime="2" projectileScale="0.18">
+    <weapon id="poison_needle" nameKey="weapon.poison_needle.name" school="Poison" quality="Common" attackPattern="Projectile" targetMode="Nearest" fireInterval="0.5" range="12" baseDamage="9" projectileSpeed="17" projectileLifetime="2" projectileScale="0.18" dotDamagePerSecond="5.4" dotDuration="3">
       <projectileColor r="0.45" g="1" b="0.22" a="1" />
     </weapon>
     <weapon id="heart_gu" nameKey="weapon.heart_gu.name" school="Poison" quality="Spirit" attackPattern="Lightning" targetMode="Strongest" fireInterval="0.35" range="12" baseDamage="3.6" targetCount="1">

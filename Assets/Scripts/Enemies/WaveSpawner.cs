@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
 using Tribulation.Core;
 using Tribulation.Config;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace Tribulation.Enemies
 {
@@ -13,7 +17,7 @@ namespace Tribulation.Enemies
         public int MaxEnemies = 90;
 
         private float timer;
-        private string enemyId = "hungry_spirit";
+        private EnemyConfig[] enemyPool = Array.Empty<EnemyConfig>();
 
         public void Configure(SpawnConfig config)
         {
@@ -22,7 +26,7 @@ namespace Tribulation.Enemies
                 return;
             }
 
-            enemyId = config.enemyId;
+            enemyPool = BuildEnemyPool(config);
             SpawnInterval = config.interval;
             MinimumSpawnInterval = config.minimumInterval;
             PressureRampSeconds = config.pressureRampSeconds;
@@ -55,7 +59,12 @@ namespace Tribulation.Enemies
 
         private void SpawnEnemy()
         {
-            var enemy = ConfigCenter.GetEnemy(enemyId);
+            var enemy = PickEnemy();
+            if (enemy == null)
+            {
+                return;
+            }
+
             var playerPosition = GameManager.Instance.Player.transform.position;
             var angle = Random.Range(0f, Mathf.PI * 2f);
             var position = playerPosition + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * SpawnRadius;
@@ -82,6 +91,84 @@ namespace Tribulation.Enemies
 
             var controller = enemyObject.GetComponent<EnemyController>();
             controller.Configure(enemy);
+        }
+
+        private static EnemyConfig[] BuildEnemyPool(SpawnConfig config)
+        {
+            var pool = new List<EnemyConfig>();
+            var ids = config.GetEnemyIds();
+            foreach (var id in ids)
+            {
+                var enemy = FindEnemy(id);
+                if (enemy == null)
+                {
+                    Debug.LogWarning($"Spawn pool references unknown enemy id '{id}'.");
+                    continue;
+                }
+
+                pool.Add(enemy);
+            }
+
+            if (pool.Count == 0)
+            {
+                pool.Add(ConfigCenter.GetEnemy(config.enemyId));
+            }
+
+            return pool.ToArray();
+        }
+
+        private static EnemyConfig FindEnemy(string id)
+        {
+            foreach (var enemy in ConfigCenter.Enemies)
+            {
+                if (enemy != null && string.Equals(enemy.id, id, StringComparison.Ordinal))
+                {
+                    return enemy;
+                }
+            }
+
+            return null;
+        }
+
+        private EnemyConfig PickEnemy()
+        {
+            if (enemyPool.Length == 0)
+            {
+                return ConfigCenter.GetEnemy("hungry_spirit");
+            }
+
+            var totalWeight = 0f;
+            foreach (var enemy in enemyPool)
+            {
+                if (enemy != null)
+                {
+                    totalWeight += Mathf.Max(0f, enemy.spawnWeight);
+                }
+            }
+
+            if (totalWeight <= 0f)
+            {
+                return enemyPool[0];
+            }
+
+            var roll = Random.value * totalWeight;
+            EnemyConfig lastPositive = null;
+            foreach (var enemy in enemyPool)
+            {
+                if (enemy == null || enemy.spawnWeight <= 0f)
+                {
+                    continue;
+                }
+
+                lastPositive = enemy;
+                roll -= enemy.spawnWeight;
+                if (roll <= 0f)
+                {
+                    return enemy;
+                }
+            }
+
+            return lastPositive ?? enemyPool[0];
         }
     }
 }

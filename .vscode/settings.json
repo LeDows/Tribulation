@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Tribulation.sln"
+    "dotnet.defaultSolution": "Tribulation.sln",
+    "dotrush.roslyn.projectOrSolutionFiles": []
 }

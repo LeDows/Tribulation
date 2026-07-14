@@ -33,6 +33,8 @@
   <text key="ui.hud.projectile_lifetime_label">Projectile Lifetime</text>
   <text key="ui.hud.weapon_slots_label">Weapon Slots</text>
   <text key="ui.hud.weapon_slots_value">{0}/{1}</text>
+  <text key="ui.hud.weapon_compact_header">Weapons {0}/{1}</text>
+  <text key="ui.hud.weapon_compact_summary">{0} {1} +{2}</text>
   <text key="ui.hud.weapon_summary">{0} {1} +{2} [{3}]  Damage {4}  Cooldown {5}  Range {6}</text>
   <text key="ui.hud.weapon_affixes_label">Affixes</text>
   <text key="ui.hud.weapon_set_label">Set</text>
@@ -72,6 +74,10 @@
   <text key="character.body_refiner.name">Body Refiner</text>
   <text key="enemy.hungry_spirit.name">Hungry Spirit</text>
   <text key="enemy.bone_imp.name">Bone Imp</text>
+  <text key="enemy.boar_spirit.name">Boar Spirit</text>
+  <text key="enemy.wild_fox.name">Wild Fox</text>
+  <text key="enemy.fallen_cultivator.name">Fallen Cultivator</text>
+  <text key="enemy.venom_snake.name">Venom Snake</text>
   <text key="map.qingyun_plateau.name">Qingyun Prototype Ground</text>
   <text key="weapon.flying_sword.name">Flying Sword</text>
   <text key="weapon.quality.common">Common</text>
@@ -98,9 +104,9 @@
   <text key="weapon.affix.wuxiang">Wuxiang</text>
   <text key="weapon.affix.dao_rhyme">Dao Rhyme</text>
   <text key="weapon.set.sword.two">Sword attack speed +20%</text>
-  <text key="weapon.set.sword.three">Sword kills split flying blades</text>
+  <text key="weapon.set.sword.three">Sword projectile weapons fire 1 extra projectile</text>
   <text key="weapon.set.fire.two">Burn damage +50%</text>
-  <text key="weapon.set.fire.three">Burn duration becomes endless</text>
+  <text key="weapon.set.fire.three">Fire projectile weapons fire 1 extra projectile</text>
   <text key="weapon.set.thunder.two">Critical chance +15%</text>
   <text key="weapon.set.thunder.three">Thunder strikes chain</text>
   <text key="weapon.set.poison.two">Poison damage +30%</text>
@@ -190,6 +196,7 @@
   <text key="upgrade.cloud_step.title">Cloud Step</text>
   <text key="upgrade.sharpened_sword.title">Sharpened Sword</text>
   <text key="upgrade.quickened_blade.title">Quickened Blade</text>
+  <text key="upgrade.multishot_art.title">Multishot Art</text>
   <text key="upgrade.temper_weapon.title">Temper Weapon</text>
   <text key="upgrade.find_weapon.title">Seek Weapon</text>
   <text key="upgrade.learn_fireball.title">Learn Fireball</text>
@@ -202,9 +209,10 @@
   <text key="upgrade.damage_multiplier.description">Increase all damage by {0}%.</text>
   <text key="upgrade.max_health.description">Increase max health by {0} and heal the same amount.</text>
   <text key="upgrade.move_speed.description">Increase movement speed by {0}.</text>
-  <text key="upgrade.weapon_damage.description">Increase weapon damage by {0}.</text>
-  <text key="upgrade.weapon_fire_rate.description">Reduce weapon cooldown by {0}%.</text>
+  <text key="upgrade.weapon_damage.description">Increase all weapon damage by {0}.</text>
+  <text key="upgrade.weapon_fire_rate.description">Reduce all weapon cooldowns by {0}%.</text>
+  <text key="upgrade.projectile_count.description">Increase all projectile weapon shot counts by {0}.</text>
   <text key="upgrade.equip_weapon.description">Equip {0}. If already equipped, enhance it instead.</text>
   <text key="upgrade.random_weapon.description">Equip {0} using the quality drop weights.</text>
-  <text key="upgrade.enhance_weapon.description">Enhance an equipped weapon by +{0}.</text>
+  <text key="upgrade.enhance_weapon.description">Enhance all equipped weapons by +{0}.</text>
 </localization>

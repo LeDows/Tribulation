@@ -305,25 +305,24 @@ namespace Tribulation.Core
 
             if (availableOptions.Count == 0)
             {
-                availableOptions.AddRange(pool);
+                Debug.LogWarning("No configured upgrade options are currently applicable. Falling back to default upgrades.", this);
+                foreach (var fallbackOption in UpgradeOptionConfig.CreateDefaults())
+                {
+                    if (IsUpgradeOptionAvailable(fallbackOption, weapon))
+                    {
+                        availableOptions.Add(fallbackOption);
+                    }
+                }
             }
 
             var count = Mathf.Min(3, availableOptions.Count);
             var selected = new UpgradeOptionConfig[count];
-            var used = new bool[availableOptions.Count];
 
             for (var i = 0; i < count; i++)
             {
                 var index = Random.Range(0, availableOptions.Count);
-                var guard = 0;
-                while (used[index] && guard < availableOptions.Count * 2)
-                {
-                    index = Random.Range(0, availableOptions.Count);
-                    guard++;
-                }
-
-                used[index] = true;
                 selected[i] = availableOptions[index];
+                availableOptions.RemoveAt(index);
             }
 
             return selected;
@@ -339,7 +338,7 @@ namespace Tribulation.Core
             var effectType = option.effectType?.Trim().ToLowerInvariant();
             if (effectType == "equip_weapon" || effectType == "random_weapon" || effectType == "enhance_weapon" ||
                 effectType == "weapon_damage" || effectType == "weapon_fire_rate" || effectType == "weapon_range" ||
-                effectType == "projectile_speed" || effectType == "projectile_scale")
+                effectType == "projectile_speed" || effectType == "projectile_scale" || effectType == "projectile_count")
             {
                 return weapon != null && weapon.CanApplyUpgrade(option);
             }
@@ -390,8 +389,7 @@ namespace Tribulation.Core
                     weapon?.AddBaseDamage(option.value);
                     break;
                 case "weapon_fire_rate":
-                    applied = weapon != null;
-                    weapon?.ReduceFireIntervalPercent(option.value);
+                    applied = weapon != null && weapon.ReduceFireIntervalPercent(option.value);
                     break;
                 case "weapon_range":
                     applied = weapon != null;
@@ -405,6 +403,9 @@ namespace Tribulation.Core
                     applied = weapon != null;
                     weapon?.AddProjectileScale(option.value);
                     break;
+                case "projectile_count":
+                    applied = weapon != null && weapon.AddProjectileCount(Mathf.RoundToInt(option.value));
+                    break;
                 case "equip_weapon":
                     applied = weapon != null && weapon.EquipWeapon(option.weaponId);
                     break;
@@ -412,7 +413,7 @@ namespace Tribulation.Core
                     applied = weapon != null && weapon.EquipRandomWeapon();
                     break;
                 case "enhance_weapon":
-                    applied = weapon != null && weapon.EnhanceWeapon(option.weaponId, Mathf.Max(1, Mathf.RoundToInt(option.value)));
+                    applied = ApplyWeaponEnhancement(weapon, option);
                     break;
                 default:
                     applied = false;
@@ -425,6 +426,19 @@ namespace Tribulation.Core
                 LastUpgradeSummary = ConfigCenter.Text(option.titleKey);
                 Debug.Log($"Applied upgrade '{option.id}' ({effectType}) value={option.value}.", this);
             }
+        }
+
+        private static bool ApplyWeaponEnhancement(AutoWeapon weapon, UpgradeOptionConfig option)
+        {
+            if (weapon == null || option == null)
+            {
+                return false;
+            }
+
+            var levels = Mathf.Max(1, Mathf.RoundToInt(option.value));
+            return string.IsNullOrWhiteSpace(option.weaponId)
+                ? weapon.EnhanceAllWeapons(levels)
+                : weapon.EnhanceWeapon(option.weaponId, levels);
         }
 
         private void OnDestroy()

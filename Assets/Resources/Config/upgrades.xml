@@ -5,6 +5,7 @@
   <upgrade id="cloud_step" titleKey="upgrade.cloud_step.title" descriptionKey="upgrade.move_speed.description" effectType="move_speed" value="0.35" />
   <upgrade id="sharpened_sword" titleKey="upgrade.sharpened_sword.title" descriptionKey="upgrade.weapon_damage.description" effectType="weapon_damage" value="6" />
   <upgrade id="quickened_blade" titleKey="upgrade.quickened_blade.title" descriptionKey="upgrade.weapon_fire_rate.description" effectType="weapon_fire_rate" value="0.12" />
+  <upgrade id="multishot_art" titleKey="upgrade.multishot_art.title" descriptionKey="upgrade.projectile_count.description" effectType="projectile_count" value="1" />
   <upgrade id="temper_weapon" titleKey="upgrade.temper_weapon.title" descriptionKey="upgrade.enhance_weapon.description" effectType="enhance_weapon" value="1" />
   <upgrade id="find_weapon" titleKey="upgrade.find_weapon.title" descriptionKey="upgrade.random_weapon.description" effectType="random_weapon" value="0" />
   <upgrade id="learn_fireball" titleKey="upgrade.learn_fireball.title" descriptionKey="upgrade.equip_weapon.description" effectType="equip_weapon" weaponId="fireball" value="0" />

@@ -16,7 +16,7 @@
       <rotationSharpness>22</rotationSharpness>
       <pitchLimits x="25" y="75" />
     </camera>
-    <spawn enemyId="hungry_spirit">
+    <spawn enemyId="hungry_spirit" enemyIds="boar_spirit,wild_fox,fallen_cultivator,venom_snake">
       <interval>1.25</interval>
       <minimumInterval>0.28</minimumInterval>
       <pressureRampSeconds>180</pressureRampSeconds>

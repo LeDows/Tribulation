@@ -421,11 +421,22 @@ namespace Tribulation.Config
         }
     }
 
+    public enum EnemyBehavior
+    {
+        Chase,
+        Charger,
+        RangedKite,
+        WoundedFlee,
+        Ambusher
+    }
+
     [Serializable]
     public sealed class EnemyConfig
     {
         [XmlAttribute] public string id = "hungry_spirit";
         [XmlAttribute] public string displayNameKey = "enemy.hungry_spirit.name";
+        [XmlAttribute] public EnemyBehavior behavior = EnemyBehavior.Chase;
+        [XmlAttribute] public float spawnWeight = 1f;
         public float maxHealth = 30f;
         public int experienceValue = 1;
         public float eliteChance = 0.15f;
@@ -437,7 +448,18 @@ namespace Tribulation.Config
         public float attackRange = 1.35f;
         public float speedDifficultySeconds = 240f;
         public float colliderRadius = 0.45f;
+        public float preferredRange = 7f;
+        public float retreatRange = 4f;
+        public float fleeHealthFraction = 0.3f;
+        public float skillRange = 8f;
+        public float skillCooldown = 4f;
+        public float windupDuration = 0.75f;
+        public float skillDuration = 0.5f;
+        public float skillSpeedMultiplier = 3f;
+        public float projectileSpeed = 10f;
+        public float projectileScale = 0.24f;
         public ConfigColor color = new(0.75f, 0.16f, 0.22f, 1f);
+        public ConfigColor projectileColor = new(0.45f, 0.75f, 1f, 1f);
 
         public static EnemyConfig CreateDefault()
         {
@@ -481,11 +503,34 @@ namespace Tribulation.Config
     public sealed class SpawnConfig
     {
         [XmlAttribute] public string enemyId = "hungry_spirit";
+        [XmlAttribute] public string enemyIds = string.Empty;
         public float interval = 1.25f;
         public float minimumInterval = 0.28f;
         public float pressureRampSeconds = 180f;
         public float radius = 16f;
         public int maxEnemies = 90;
+
+        public string[] GetEnemyIds()
+        {
+            var source = string.IsNullOrWhiteSpace(enemyIds) ? enemyId : enemyIds;
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                return Array.Empty<string>();
+            }
+
+            var rawIds = source.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var ids = new List<string>(rawIds.Length);
+            foreach (var rawId in rawIds)
+            {
+                var id = rawId.Trim();
+                if (!string.IsNullOrWhiteSpace(id) && !ids.Contains(id))
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return ids.ToArray();
+        }
     }
 
     public enum WeaponQuality
@@ -1129,6 +1174,9 @@ namespace Tribulation.Config
         [XmlAttribute] public float coneAngle = 60f;
         [XmlAttribute] public int maxProjectileHits = 1;
         [XmlAttribute] public int chainCount;
+        [XmlAttribute] public bool areaOnImpact;
+        [XmlAttribute] public float dotDamagePerSecond;
+        [XmlAttribute] public float dotDuration;
         [XmlAttribute] public float experienceGainBonus;
         [XmlAttribute] public float healthRegenPercentPerSecond;
         public ConfigColor projectileColor = new(0.8f, 0.95f, 1f, 1f);
@@ -1201,6 +1249,14 @@ namespace Tribulation.Config
                     descriptionKey = "upgrade.weapon_fire_rate.description",
                     effectType = "weapon_fire_rate",
                     value = 0.12f
+                },
+                new UpgradeOptionConfig
+                {
+                    id = "multishot_art",
+                    titleKey = "upgrade.multishot_art.title",
+                    descriptionKey = "upgrade.projectile_count.description",
+                    effectType = "projectile_count",
+                    value = 1f
                 }
             };
         }

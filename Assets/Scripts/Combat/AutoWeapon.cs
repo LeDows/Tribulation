@@ -27,6 +27,7 @@ namespace Tribulation.Combat
         private float rangeBonus;
         private float projectileSpeedBonus;
         private float projectileScaleBonus;
+        private int projectileCountBonus;
 
         public int EquippedCount => equippedWeapons.Count;
         public int MaxEquippedWeapons => Mathf.Max(1, catalog != null ? catalog.maxEquipped : 3);
@@ -91,9 +92,11 @@ namespace Tribulation.Combat
             return effectType switch
             {
                 "equip_weapon" => CanEquipWeapon(option.weaponId) || CanEnhanceWeapon(option.weaponId),
-                "random_weapon" => CanEquipAnyWeapon() || CanEnhanceWeapon(),
+                "random_weapon" => CanEquipAnyWeapon(),
                 "enhance_weapon" => CanEnhanceWeapon(option.weaponId),
-                "weapon_damage" or "weapon_fire_rate" or "weapon_range" or "projectile_speed" or "projectile_scale" => HasAnyWeapon,
+                "weapon_fire_rate" => HasAnyWeapon && CanReduceFireIntervalPercent(option.value),
+                "projectile_count" => HasProjectileWeapon() && Mathf.RoundToInt(option.value) > 0,
+                "weapon_damage" or "weapon_range" or "projectile_speed" or "projectile_scale" => HasAnyWeapon,
                 _ => true
             };
         }
@@ -127,7 +130,7 @@ namespace Tribulation.Combat
         {
             if (equippedWeapons.Count >= MaxEquippedWeapons)
             {
-                return EnhanceWeapon();
+                return false;
             }
 
             for (var i = 0; i < 30; i++)
@@ -141,22 +144,40 @@ namespace Tribulation.Combat
                 }
             }
 
+            if (catalog.weapons != null)
+            {
+                foreach (var weapon in catalog.weapons)
+                {
+                    if (weapon != null && FindEquippedWeapon(weapon.id) == null)
+                    {
+                        EquipWeaponInternal(weapon);
+                        RefreshLegacyFields();
+                        return true;
+                    }
+                }
+            }
+
             return false;
         }
 
         public bool EnhanceWeapon(string weaponId = null, int levels = 1)
         {
             var weapon = string.IsNullOrWhiteSpace(weaponId) ? FindFirstEnhanceableWeapon() : FindEquippedWeapon(weaponId);
-            if (weapon == null || levels <= 0)
+            if (!EnhanceWeapon(weapon, levels))
             {
                 return false;
             }
 
+            RefreshLegacyFields();
+            return true;
+        }
+
+        public bool EnhanceAllWeapons(int levels = 1)
+        {
             var applied = false;
-            for (var i = 0; i < levels && CanEnhanceWeapon(weapon); i++)
+            foreach (var weapon in equippedWeapons)
             {
-                weapon.EnhancementLevel++;
-                applied = true;
+                applied |= EnhanceWeapon(weapon, levels);
             }
 
             if (applied)
@@ -176,7 +197,20 @@ namespace Tribulation.Combat
 
         public bool CanEquipAnyWeapon()
         {
-            return equippedWeapons.Count < MaxEquippedWeapons && catalog.weapons != null && catalog.weapons.Length > equippedWeapons.Count;
+            if (equippedWeapons.Count >= MaxEquippedWeapons || catalog.weapons == null)
+            {
+                return false;
+            }
+
+            foreach (var weapon in catalog.weapons)
+            {
+                if (weapon != null && FindEquippedWeapon(weapon.id) == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public bool CanEnhanceWeapon(string weaponId = null)
@@ -215,11 +249,27 @@ namespace Tribulation.Combat
             RefreshLegacyFields();
         }
 
-        public void ReduceFireIntervalPercent(float percent)
+        public bool ReduceFireIntervalPercent(float percent)
         {
-            fireIntervalMultiplier *= Mathf.Clamp01(1f - percent);
-            fireIntervalMultiplier = Mathf.Max(0.2f, fireIntervalMultiplier);
+            if (!CanReduceFireIntervalPercent(percent))
+            {
+                return false;
+            }
+
+            var previousMultiplier = fireIntervalMultiplier;
+            fireIntervalMultiplier = Mathf.Max(0.2f, fireIntervalMultiplier * Mathf.Clamp01(1f - percent));
+            if (Mathf.Approximately(previousMultiplier, fireIntervalMultiplier))
+            {
+                return false;
+            }
+
             RefreshLegacyFields();
+            return true;
+        }
+
+        public bool CanReduceFireIntervalPercent(float percent)
+        {
+            return percent > 0f && fireIntervalMultiplier > 0.2f + Mathf.Epsilon;
         }
 
         public void AddRange(float amount)
@@ -238,6 +288,17 @@ namespace Tribulation.Combat
         {
             projectileScaleBonus += amount;
             RefreshLegacyFields();
+        }
+
+        public bool AddProjectileCount(int amount)
+        {
+            if (amount <= 0 || !HasProjectileWeapon())
+            {
+                return false;
+            }
+
+            projectileCountBonus += amount;
+            return true;
         }
 
         private static string NormalizeEffectType(UpgradeOptionConfig option)
@@ -359,7 +420,10 @@ namespace Tribulation.Combat
                 return;
             }
 
-            var count = Mathf.Max(1, weapon.Config.projectileCount + GetExtraProjectiles(weapon));
+            var count = CalculateProjectileCount(
+                weapon.Config.projectileCount,
+                projectileCountBonus,
+                GetExtraProjectiles(weapon));
             var baseDirection = target.transform.position - transform.position;
             baseDirection.y = 0f;
             if (baseDirection.sqrMagnitude <= 0.01f)
@@ -391,12 +455,15 @@ namespace Tribulation.Combat
             }
 
             var projectile = projectileObject.GetComponent<Projectile>();
+            var hitDamage = RollDamage(weapon);
             projectile.Launch(
                 direction,
-                RollDamage(weapon),
+                hitDamage,
                 Mathf.Max(0f, weapon.Config.projectileSpeed + projectileSpeedBonus),
                 Mathf.Max(0.05f, weapon.Config.projectileLifetime),
-                Mathf.Max(1, weapon.Config.maxProjectileHits));
+                Mathf.Max(1, weapon.Config.maxProjectileHits),
+                weapon.Config.areaOnImpact ? GetHitRadius(weapon) : 0f,
+                enemy => DamageEnemy(enemy, weapon, hitDamage));
         }
 
         private void DamageCone(EquippedWeaponState weapon)
@@ -450,8 +517,16 @@ namespace Tribulation.Combat
 
         private void DamageLightning(EquippedWeaponState weapon)
         {
-            var count = Mathf.Max(1, weapon.Config.targetCount + GetExtraChains(weapon));
+            var count = CalculateLightningTargetCount(
+                weapon.Config.targetCount,
+                weapon.Config.chainCount,
+                GetExtraChains(weapon));
             DamageTargets(FindTargets(weapon.Config.targetMode, count, GetRange(weapon)), weapon);
+        }
+
+        private static int CalculateLightningTargetCount(int targetCount, int chainCount, int extraChains)
+        {
+            return Mathf.Max(1, targetCount) + Mathf.Max(0, chainCount) + Mathf.Max(0, extraChains);
         }
 
         private void DamageArea(Vector3 center, float radius, EquippedWeaponState weapon)
@@ -482,18 +557,28 @@ namespace Tribulation.Combat
 
         private void DamageEnemy(EnemyHealth enemy, EquippedWeaponState weapon)
         {
+            DamageEnemy(enemy, weapon, RollDamage(weapon));
+        }
+
+        private void DamageEnemy(EnemyHealth enemy, EquippedWeaponState weapon, float damage)
+        {
             if (enemy == null)
             {
                 return;
             }
 
-            var damage = RollDamage(weapon);
             if (damage <= 0f)
             {
                 return;
             }
 
             enemy.TakeDamage(damage);
+
+            var dotDamagePerSecond = GetDotDamagePerSecond(weapon);
+            if (enemy.Health > 0f && dotDamagePerSecond > 0f && weapon.Config.dotDuration > 0f)
+            {
+                enemy.ApplyDamageOverTime(dotDamagePerSecond, weapon.Config.dotDuration);
+            }
 
             var lifeSteal = GetAffixValue(weapon, "life_steal");
             if (stats != null && lifeSteal > 0f)
@@ -590,7 +675,17 @@ namespace Tribulation.Combat
 
         private float GetDamage(EquippedWeaponState weapon)
         {
-            var damage = Mathf.Max(0f, weapon.Config.baseDamage + flatDamageBonus);
+            return ScaleDamage(weapon, weapon.Config.baseDamage + flatDamageBonus);
+        }
+
+        private float GetDotDamagePerSecond(EquippedWeaponState weapon)
+        {
+            return ScaleDamage(weapon, weapon.Config.dotDamagePerSecond);
+        }
+
+        private float ScaleDamage(EquippedWeaponState weapon, float baseDamage)
+        {
+            var damage = Mathf.Max(0f, baseDamage);
             damage *= stats != null ? stats.DamageMultiplier : 1f;
             damage *= 1f + Mathf.Max(0, weapon.EnhancementLevel) * Mathf.Max(0f, catalog.enhancementDamageBonusPerLevel);
             damage *= 1f + GetAffixValue(weapon, "damage_multiplier");
@@ -678,6 +773,30 @@ namespace Tribulation.Combat
             return set != null && GetSetPieceCount(weapon.Config.school) >= 3 ? Mathf.Max(0, set.threePieceExtraProjectiles) : 0;
         }
 
+        private bool HasProjectileWeapon()
+        {
+            foreach (var weapon in equippedWeapons)
+            {
+                if (SupportsProjectileCount(weapon.Config.attackPattern))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool SupportsProjectileCount(WeaponAttackPattern attackPattern)
+        {
+            return attackPattern == WeaponAttackPattern.Projectile ||
+                attackPattern == WeaponAttackPattern.BurstProjectiles;
+        }
+
+        private static int CalculateProjectileCount(int baseCount, int upgradeBonus, int setBonus)
+        {
+            return Mathf.Max(1, baseCount + Mathf.Max(0, upgradeBonus) + Mathf.Max(0, setBonus));
+        }
+
         private int GetExtraChains(EquippedWeaponState weapon)
         {
             var set = catalog.FindSet(weapon.Config.school);
@@ -707,6 +826,23 @@ namespace Tribulation.Combat
             }
 
             return weapon.EnhancementLevel < catalog.GetMaxEnhancementLevel(weapon.Config, weapon.AffixIds);
+        }
+
+        private bool EnhanceWeapon(EquippedWeaponState weapon, int levels)
+        {
+            if (weapon == null || levels <= 0)
+            {
+                return false;
+            }
+
+            var applied = false;
+            for (var i = 0; i < levels && CanEnhanceWeapon(weapon); i++)
+            {
+                weapon.EnhancementLevel++;
+                applied = true;
+            }
+
+            return applied;
         }
 
         private EquippedWeaponState FindFirstEnhanceableWeapon()

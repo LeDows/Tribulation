@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <enemies>
-  <enemy id="hungry_spirit" displayNameKey="enemy.hungry_spirit.name">
+  <enemy id="hungry_spirit" displayNameKey="enemy.hungry_spirit.name" behavior="Chase" spawnWeight="1">
     <maxHealth>30</maxHealth>
     <experienceValue>1</experienceValue>
     <eliteChance>0.15</eliteChance>
@@ -14,7 +14,7 @@
     <colliderRadius>0.45</colliderRadius>
     <color r="0.75" g="0.16" b="0.22" a="1" />
   </enemy>
-  <enemy id="bone_imp" displayNameKey="enemy.bone_imp.name">
+  <enemy id="bone_imp" displayNameKey="enemy.bone_imp.name" behavior="Chase" spawnWeight="1">
     <maxHealth>18</maxHealth>
     <experienceValue>1</experienceValue>
     <eliteChance>0.08</eliteChance>
@@ -27,5 +27,82 @@
     <speedDifficultySeconds>260</speedDifficultySeconds>
     <colliderRadius>0.38</colliderRadius>
     <color r="0.58" g="0.72" b="0.95" a="1" />
+  </enemy>
+  <enemy id="boar_spirit" displayNameKey="enemy.boar_spirit.name" behavior="Charger" spawnWeight="4">
+    <maxHealth>42</maxHealth>
+    <experienceValue>2</experienceValue>
+    <eliteChance>0</eliteChance>
+    <eliteExperienceValue>2</eliteExperienceValue>
+    <minMoveSpeed>2.6</minMoveSpeed>
+    <maxMoveSpeed>3.3</maxMoveSpeed>
+    <contactDamage>12</contactDamage>
+    <attackInterval>0.9</attackInterval>
+    <attackRange>1.5</attackRange>
+    <speedDifficultySeconds>260</speedDifficultySeconds>
+    <colliderRadius>0.55</colliderRadius>
+    <skillRange>9</skillRange>
+    <skillCooldown>4.5</skillCooldown>
+    <windupDuration>0.75</windupDuration>
+    <skillDuration>0.55</skillDuration>
+    <skillSpeedMultiplier>3.2</skillSpeedMultiplier>
+    <color r="0.62" g="0.18" b="0.12" a="1" />
+  </enemy>
+  <enemy id="wild_fox" displayNameKey="enemy.wild_fox.name" behavior="RangedKite" spawnWeight="2.5">
+    <maxHealth>24</maxHealth>
+    <experienceValue>1</experienceValue>
+    <eliteChance>0</eliteChance>
+    <eliteExperienceValue>1</eliteExperienceValue>
+    <minMoveSpeed>3.3</minMoveSpeed>
+    <maxMoveSpeed>4.1</maxMoveSpeed>
+    <contactDamage>7</contactDamage>
+    <attackInterval>3</attackInterval>
+    <attackRange>12</attackRange>
+    <speedDifficultySeconds>280</speedDifficultySeconds>
+    <colliderRadius>0.4</colliderRadius>
+    <preferredRange>8</preferredRange>
+    <retreatRange>4</retreatRange>
+    <projectileSpeed>10</projectileSpeed>
+    <projectileScale>0.22</projectileScale>
+    <color r="0.72" g="0.78" b="0.92" a="1" />
+    <projectileColor r="0.25" g="0.6" b="1" a="1" />
+  </enemy>
+  <enemy id="fallen_cultivator" displayNameKey="enemy.fallen_cultivator.name" behavior="WoundedFlee" spawnWeight="1.75">
+    <maxHealth>36</maxHealth>
+    <experienceValue>2</experienceValue>
+    <eliteChance>0</eliteChance>
+    <eliteExperienceValue>2</eliteExperienceValue>
+    <minMoveSpeed>2.1</minMoveSpeed>
+    <maxMoveSpeed>2.8</maxMoveSpeed>
+    <contactDamage>9</contactDamage>
+    <attackInterval>5</attackInterval>
+    <attackRange>13</attackRange>
+    <speedDifficultySeconds>300</speedDifficultySeconds>
+    <colliderRadius>0.46</colliderRadius>
+    <preferredRange>9</preferredRange>
+    <fleeHealthFraction>0.3</fleeHealthFraction>
+    <projectileSpeed>12</projectileSpeed>
+    <projectileScale>0.3</projectileScale>
+    <color r="0.48" g="0.42" b="0.32" a="1" />
+    <projectileColor r="0.7" g="0.72" b="0.58" a="1" />
+  </enemy>
+  <enemy id="venom_snake" displayNameKey="enemy.venom_snake.name" behavior="Ambusher" spawnWeight="1.5">
+    <maxHealth>20</maxHealth>
+    <experienceValue>1</experienceValue>
+    <eliteChance>0</eliteChance>
+    <eliteExperienceValue>1</eliteExperienceValue>
+    <minMoveSpeed>2.8</minMoveSpeed>
+    <maxMoveSpeed>3.5</maxMoveSpeed>
+    <contactDamage>10</contactDamage>
+    <attackInterval>1</attackInterval>
+    <attackRange>1.25</attackRange>
+    <speedDifficultySeconds>280</speedDifficultySeconds>
+    <colliderRadius>0.3</colliderRadius>
+    <preferredRange>4.5</preferredRange>
+    <skillRange>4.5</skillRange>
+    <skillCooldown>2.5</skillCooldown>
+    <windupDuration>0.15</windupDuration>
+    <skillDuration>0.38</skillDuration>
+    <skillSpeedMultiplier>4.5</skillSpeedMultiplier>
+    <color r="0.18" g="0.68" b="0.3" a="1" />
   </enemy>
 </enemies>

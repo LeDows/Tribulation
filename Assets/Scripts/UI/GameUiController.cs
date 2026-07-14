@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Globalization;
 using Tribulation.Core;
 using Tribulation.Config;
 using Tribulation.Combat;
@@ -21,7 +20,6 @@ namespace Tribulation.UI
         private Text healthText;
         private Text killsText;
         private Text timeText;
-        private Text statsText;
         private Text weaponStatsText;
         private Text lastUpgradeText;
         private Text attributePointsText;
@@ -57,15 +55,12 @@ namespace Tribulation.UI
             healthText = FindText("HealthValue");
             killsText = FindText("KillsValue");
             timeText = FindText("TimeValue");
-            statsText = FindText("StatsValue", false);
             weaponStatsText = FindText("WeaponStatsValue", false);
             lastUpgradeText = FindText("LastUpgradeValue", false);
             attributePointsText = FindText("AttributePointsValue");
             resultTimeText = FindText("ResultTimeValue");
             resultKillsText = FindText("ResultKillsValue");
             resultLevelText = FindText("ResultLevelValue");
-
-            HideLegacyHudRows();
 
             BindButton("StartButton", () => GameManager.Instance.StartRun());
             BindButton("QuitButton", () => GameManager.Instance.QuitGame());
@@ -202,9 +197,8 @@ namespace Tribulation.UI
             SetText(healthText, $"{Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}");
             SetText(killsText, manager.KillCount.ToString());
             SetText(timeText, FormatTime(manager.RunTime));
-            SetText(statsText, FormatCharacterStats(player));
             SetText(weaponStatsText, FormatWeaponStats(player.GetComponent<AutoWeapon>()));
-            SetText(lastUpgradeText, FormatRunStats(manager));
+            SetText(lastUpgradeText, FormatLastUpgrade(manager));
         }
 
         private void RefreshAttributePanel(PlayerStats player)
@@ -238,10 +232,15 @@ namespace Tribulation.UI
                 return Mathf.RoundToInt(option.value * 100f);
             }
 
-            if (effectType == "equip_weapon" || effectType == "enhance_weapon")
+            if (effectType == "equip_weapon")
             {
                 var weapon = ConfigCenter.Weapon.FindWeapon(option.weaponId);
                 return weapon != null ? ConfigCenter.Text(weapon.nameKey) : option.weaponId;
+            }
+
+            if (effectType == "enhance_weapon" || effectType == "projectile_count")
+            {
+                return Mathf.Max(1, Mathf.RoundToInt(option.value));
             }
 
             if (effectType == "random_weapon")
@@ -342,112 +341,46 @@ namespace Tribulation.UI
 
         private static string FormatWeaponStats(AutoWeapon weapon)
         {
-            if (weapon == null || !weapon.HasAnyWeapon)
+            if (weapon == null)
             {
-                return string.Join(
-                    "\n",
-                    ConfigCenter.Text("ui.hud.weapon_title"),
-                    FormatHudLine("ui.hud.weapon_name_label", ConfigCenter.Text("ui.common.none")));
+                return string.Empty;
             }
 
             var lines = new List<string>
             {
-                ConfigCenter.Text("ui.hud.weapon_title"),
-                FormatHudLine(
-                    "ui.hud.weapon_slots_label",
-                    ConfigCenter.Text("ui.hud.weapon_slots_value", weapon.EquippedCount, weapon.MaxEquippedWeapons))
+                ConfigCenter.Text("ui.hud.weapon_compact_header", weapon.EquippedCount, weapon.MaxEquippedWeapons)
             };
+
+            if (!weapon.HasAnyWeapon)
+            {
+                lines.Add(ConfigCenter.Text("ui.common.none"));
+                return string.Join("\n", lines);
+            }
 
             foreach (var view in weapon.GetEquippedWeaponViews())
             {
                 lines.Add(ConfigCenter.Text(
-                    "ui.hud.weapon_summary",
+                    "ui.hud.weapon_compact_summary",
                     view.QualityName,
                     view.Name,
-                    view.EnhancementLevel,
-                    view.SchoolName,
-                    FormatDecimal(view.CurrentDamage, "0.0"),
-                    FormatSeconds(view.FireInterval),
-                    FormatDecimal(view.Range, "0.0")));
-
-                if (!string.IsNullOrWhiteSpace(view.Affixes))
-                {
-                    lines.Add(FormatHudLine("ui.hud.weapon_affixes_label", view.Affixes));
-                }
-
-                if (view.SetPieceCount >= 2)
-                {
-                    lines.Add(FormatHudLine(
-                        "ui.hud.weapon_set_label",
-                        ConfigCenter.Text("ui.hud.weapon_set_value", view.SchoolName, view.SetPieceCount)));
-                }
+                    view.EnhancementLevel));
             }
 
             return string.Join("\n", lines);
         }
 
-        private static string FormatCharacterStats(PlayerStats player)
-        {
-            return string.Join(
-                "\n",
-                ConfigCenter.Text("ui.hud.character_title"),
-                FormatHudLine("ui.hud.level_label", player.RealmLayerDisplay),
-                FormatHudLine("ui.hud.level_number_label", player.Level.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.hud.qi_label", $"{player.Experience}/{player.ExperienceToNextLevel}"),
-                FormatHudLine("ui.hud.health_label", $"{Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}"),
-                FormatHudLine("ui.attribute.spirit_power", player.SpiritPower.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.divine_sense", player.DivineSense.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.root", player.Root.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.insight", player.Insight.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.fortune", player.Fortune.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.agility", player.Agility.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.attribute.will", player.Will.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.hud.move_speed_label", FormatDecimal(player.MoveSpeed, "0.00")),
-                FormatHudLine("ui.hud.damage_multiplier_label", ConfigCenter.Text("ui.hud.multiplier_value", FormatDecimal(player.DamageMultiplier, "0.00"))),
-                FormatHudLine("ui.hud.crit_chance_label", FormatPercent(player.CritChance)),
-                FormatHudLine("ui.hud.pickup_radius_label", FormatDecimal(player.PickupRadiusBonus, "0.0")),
-                FormatHudLine("ui.hud.experience_gain_label", ConfigCenter.Text("ui.hud.multiplier_value", FormatDecimal(player.ExperienceGainMultiplier, "0.00"))),
-                FormatHudLine("ui.hud.rare_reward_label", FormatPercent(player.RareRewardChanceBonus)),
-                FormatHudLine("ui.hud.damage_reduction_label", FormatPercent(player.DamageReduction)));
-        }
-
-        private static string FormatRunStats(GameManager manager)
+        private static string FormatLastUpgrade(GameManager manager)
         {
             var lastUpgrade = string.IsNullOrWhiteSpace(manager.LastUpgradeSummary)
                 ? ConfigCenter.Text("ui.common.none")
                 : manager.LastUpgradeSummary;
 
-            return string.Join(
-                "\n",
-                ConfigCenter.Text("ui.hud.run_title"),
-                FormatHudLine("ui.hud.kills_label", manager.KillCount.ToString(CultureInfo.InvariantCulture)),
-                FormatHudLine("ui.hud.time_label", FormatTime(manager.RunTime)),
-                FormatHudLine("ui.hud.last_upgrade_label", lastUpgrade));
+            return FormatHudLine("ui.hud.last_upgrade_label", lastUpgrade);
         }
 
         private static string FormatHudLine(string labelKey, string value)
         {
             return ConfigCenter.Text("ui.hud.stat_line", ConfigCenter.Text(labelKey), value);
-        }
-
-        private static string FormatDecimal(float value, string format)
-        {
-            return value.ToString(format, CultureInfo.InvariantCulture);
-        }
-
-        private static string FormatSeconds(float seconds)
-        {
-            return ConfigCenter.Text("ui.hud.seconds_value", FormatDecimal(seconds, "0.00"));
-        }
-
-        private static string FormatPerSecond(float value)
-        {
-            return ConfigCenter.Text("ui.hud.per_second_value", FormatDecimal(value, "0.00"));
-        }
-
-        private static string FormatPercent(float value)
-        {
-            return ConfigCenter.Text("ui.hud.percent_value", Mathf.RoundToInt(value * 100f));
         }
 
         private static string GetAttributeObjectSuffix(CultivationAttribute attribute)
@@ -478,29 +411,6 @@ namespace Tribulation.UI
                 CultivationAttribute.Will => "ui.attribute.will",
                 _ => string.Empty
             };
-        }
-
-        private void HideLegacyHudRows()
-        {
-            SetChildActive("Level", false);
-            SetChildActive("LevelValue", false);
-            SetChildActive("Experience", false);
-            SetChildActive("ExperienceValue", false);
-            SetChildActive("Health", false);
-            SetChildActive("HealthValue", false);
-            SetChildActive("Kills", false);
-            SetChildActive("KillsValue", false);
-            SetChildActive("Time", false);
-            SetChildActive("TimeValue", false);
-        }
-
-        private void SetChildActive(string childName, bool active)
-        {
-            var child = FindDescendant(childName);
-            if (child != null)
-            {
-                child.gameObject.SetActive(active);
-            }
         }
 
     }
