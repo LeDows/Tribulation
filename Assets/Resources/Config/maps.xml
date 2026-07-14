@@ -22,6 +22,9 @@
       <pressureRampSeconds>180</pressureRampSeconds>
       <radius>16</radius>
       <maxEnemies>90</maxEnemies>
+      <projectilePoolSize>48</projectilePoolSize>
+      <experienceOrbPoolSize>32</experienceOrbPoolSize>
+      <prewarmBatchSize>4</prewarmBatchSize>
     </spawn>
   </map>
 </maps>

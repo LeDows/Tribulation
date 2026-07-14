@@ -8,6 +8,7 @@ namespace Tribulation.Core
         private static void BuildPrototypeScene()
         {
             Time.timeScale = 1f;
+            RuntimePrefabCatalog.PreloadDynamicPrefabs();
 
             if (Object.FindFirstObjectByType<GameManager>() != null)
             {

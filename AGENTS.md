@@ -46,6 +46,17 @@ When something is invisible, misplaced, clipped, incorrectly layered, or the wro
 - Treat Inspector screenshots and serialized asset values as primary evidence.
 - Investigate refresh logic, camera-facing behavior, materials, render queues, or custom drawing only after the Prefab/layout data looks sane.
 
+## Performance Regression Prevention
+
+Before changing spawning, pooled runtime objects, pause/state handling, HUD or world-space UI, physics movement, or URP settings, read `Docs/Unity-Performance-Guardrails.md`.
+
+- Repeated gameplay paths must not perform synchronous `Resources.Load`, raw `Instantiate`/`Destroy` churn, `renderer.material` access, or scene-wide `FindObjectsByType` queries.
+- Use the existing runtime catalog, pools, active registries, reusable buffers, hierarchy reservation, and `MaterialPropertyBlock` path. Pool acquire/release must be paired and reused objects must reset all life-specific state.
+- `Time.timeScale = 0` does not stop `Update`, `LateUpdate`, trigger callbacks, UI rebuilds, or rendering. Simulation callbacks must gate on `GameManager.IsSimulationRunning`; paused frame limiting must restore the previous running target.
+- Verify the actual scene and pipeline asset references before changing render settings. In this project the active PC volume is `Assets/Settings/SampleSceneProfile.asset`, not the similarly named default profile.
+- Do not solve performance by silently changing gameplay. Pickup merging, pickup caps, projectile caps, despawn rules, or reward relocation require explicit approval.
+- After a performance change, run Unity compilation and the complete EditMode suite, check XML and asset diffs, then re-profile a Development Build without Deep Profile for 300-600 representative frames when practical. If any validation cannot run, report why and leave the missing verification explicit.
+
 ## Completion Checklist
 
 Before finishing asset or Prefab-related work:

@@ -14,6 +14,7 @@ namespace Tribulation.Core
         private const int GridSize = 5;
         private const int MinimumGridOffset = -(GridSize / 2);
         private const int MaximumGridOffset = MinimumGridOffset + GridSize - 1;
+        public const int TileCount = GridSize * GridSize;
 
         private Transform target;
         private Transform[] tiles = Array.Empty<Transform>();
@@ -62,7 +63,7 @@ namespace Tribulation.Core
                 name = ConfigCenter.Text("runtime.ground.material_name", ConfigCenter.Text(map.displayNameKey))
             };
 
-            tiles = new Transform[GridSize * GridSize];
+            tiles = new Transform[TileCount];
             var index = 0;
             for (var z = MinimumGridOffset; z <= MaximumGridOffset; z++)
             {
@@ -81,6 +82,11 @@ namespace Tribulation.Core
 
         private void LateUpdate()
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                return;
+            }
+
             RefreshTiles(force: false);
         }
 

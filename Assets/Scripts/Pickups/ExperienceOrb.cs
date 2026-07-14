@@ -15,23 +15,33 @@ namespace Tribulation.Pickups
         {
             var config = ConfigCenter.Pickup;
             var parent = GameManager.Instance != null ? GameManager.Instance.RunRoot : null;
-            var orbObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.ExperienceOrb, parent);
+            var orbObject = RuntimePrefabCatalog.InstantiatePooled(RuntimePrefabCatalog.ExperienceOrb, parent);
+            if (orbObject == null)
+            {
+                return;
+            }
+
             orbObject.name = ConfigCenter.Text(config.nameKey);
             orbObject.transform.position = position + Vector3.up * 0.3f;
             orbObject.transform.localScale = Vector3.one * config.scale;
             if (orbObject.TryGetComponent<Renderer>(out var renderer))
             {
-                renderer.material.color = config.color;
+                RuntimePrefabCatalog.SetRendererColor(renderer, config.color);
             }
 
             var orb = orbObject.GetComponent<ExperienceOrb>();
-            orb.Value = value;
+            orb.Value = Mathf.Max(0, value);
             orb.MagnetRadius = config.magnetRadius;
             orb.MoveSpeed = config.moveSpeed;
         }
 
         private void Update()
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                return;
+            }
+
             var player = GameManager.Instance.Player;
             if (player == null)
             {
@@ -48,13 +58,19 @@ namespace Tribulation.Pickups
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                return;
+            }
+
             if (!other.TryGetComponent<PlayerStats>(out var player))
             {
                 return;
             }
 
             player.AddExperience(Value);
-            Destroy(gameObject);
+            RuntimePrefabCatalog.ReleasePooled(gameObject, RuntimePrefabCatalog.ExperienceOrb);
         }
+
     }
 }

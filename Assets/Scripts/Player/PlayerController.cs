@@ -1,3 +1,4 @@
+using Tribulation.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,6 +10,7 @@ namespace Tribulation.Player
         private Rigidbody body;
         private PlayerStats stats;
         private Vector3 moveDirection;
+        private Transform gameplayCamera;
 
         private void Awake()
         {
@@ -18,6 +20,12 @@ namespace Tribulation.Player
 
         private void Update()
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                moveDirection = Vector3.zero;
+                return;
+            }
+
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {
@@ -42,22 +50,33 @@ namespace Tribulation.Player
 
         private void FixedUpdate()
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                body.linearVelocity = Vector3.zero;
+                return;
+            }
+
             body.linearVelocity = moveDirection * stats.MoveSpeed;
         }
 
-        private static Vector3 GetCameraRelativeDirection(Vector2 input)
+        private Vector3 GetCameraRelativeDirection(Vector2 input)
         {
-            var camera = Camera.main;
-            if (camera == null)
+            if (gameplayCamera == null)
+            {
+                var mainCamera = Camera.main;
+                gameplayCamera = mainCamera != null ? mainCamera.transform : null;
+            }
+
+            if (gameplayCamera == null)
             {
                 return new Vector3(input.x, 0f, input.y);
             }
 
-            var forward = camera.transform.forward;
+            var forward = gameplayCamera.forward;
             forward.y = 0f;
             forward.Normalize();
 
-            var right = camera.transform.right;
+            var right = gameplayCamera.right;
             right.y = 0f;
             right.Normalize();
 

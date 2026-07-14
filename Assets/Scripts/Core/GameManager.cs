@@ -14,7 +14,10 @@ namespace Tribulation.Core
 {
     public sealed class GameManager : MonoBehaviour
     {
+        private const int PausedTargetFrameRate = 30;
+
         public static GameManager Instance { get; private set; }
+        public static bool IsSimulationRunning => Instance != null && Instance.State == GameState.Running;
 
         public PlayerStats Player { get; private set; }
         public int KillCount { get; private set; }
@@ -29,6 +32,7 @@ namespace Tribulation.Core
         private GameUiController ui;
         private UpgradeOptionConfig[] currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
         private int pendingLevelUpSelections;
+        private int runningTargetFrameRate;
 
         private void Awake()
         {
@@ -39,13 +43,15 @@ namespace Tribulation.Core
             }
 
             Instance = this;
+            runningTargetFrameRate = Application.targetFrameRate;
+            Application.targetFrameRate = PausedTargetFrameRate;
             ui = GetComponentInChildren<GameUiController>(true);
         }
 
         private void Start()
         {
             Time.timeScale = 1f;
-            State = GameState.MainMenu;
+            SetState(GameState.MainMenu);
             ui?.ShowMainMenu();
         }
 
@@ -77,7 +83,6 @@ namespace Tribulation.Core
         {
             ClearRun();
             Time.timeScale = 1f;
-            State = GameState.Running;
             KillCount = 0;
             RunTime = 0f;
             LastUpgradeSummary = string.Empty;
@@ -93,10 +98,12 @@ namespace Tribulation.Core
             }
 
             runRoot = runRootObject.transform;
+            ReserveRunHierarchy(map.spawn);
             var player = CreatePlayer(ConfigCenter.GetSelectedCharacter(), map);
             CreateGround(map, player.transform);
             CreateCamera(player.transform, map.camera);
             CreateSpawner(map);
+            SetState(GameState.Running);
             ui?.ShowHud();
         }
 
@@ -109,7 +116,7 @@ namespace Tribulation.Core
         {
             ClearRun();
             Time.timeScale = 1f;
-            State = GameState.MainMenu;
+            SetState(GameState.MainMenu);
             KillCount = 0;
             RunTime = 0f;
             LastUpgradeSummary = string.Empty;
@@ -133,7 +140,7 @@ namespace Tribulation.Core
                 return;
             }
 
-            State = GameState.GameOver;
+            SetState(GameState.GameOver);
             Time.timeScale = 0f;
             ui?.ShowResult();
         }
@@ -190,7 +197,7 @@ namespace Tribulation.Core
 
             if (playerObject.TryGetComponent<Renderer>(out var renderer))
             {
-                renderer.material.color = character.color;
+                RuntimePrefabCatalog.SetRendererColor(renderer, character.color);
             }
 
             var stats = playerObject.GetComponent<PlayerStats>();
@@ -210,6 +217,29 @@ namespace Tribulation.Core
         {
             var spawnerObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.WaveSpawner, runRoot);
             spawnerObject.GetComponent<WaveSpawner>().Configure(map.spawn);
+        }
+
+        private void ReserveRunHierarchy(SpawnConfig spawn)
+        {
+            if (runRoot == null || spawn == null)
+            {
+                return;
+            }
+
+            var requiredTransforms = 1;
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.Player);
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.WaveSpawner);
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.Ground) * InfiniteGround.TileCount;
+            var maxEnemies = Mathf.Max(0, spawn.maxEnemies);
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.Enemy) * maxEnemies;
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.Projectile) * Mathf.Max(0, spawn.projectilePoolSize);
+            // Leave room for a full screen of drops without changing pickup rules or imposing an orb cap.
+            requiredTransforms += RuntimePrefabCatalog.CountTransforms(RuntimePrefabCatalog.ExperienceOrb) *
+                (Mathf.Max(0, spawn.experienceOrbPoolSize) + maxEnemies);
+
+            runRoot.hierarchyCapacity = Mathf.Max(
+                runRoot.hierarchyCapacity,
+                Mathf.NextPowerOfTwo(requiredTransforms));
         }
 
         private static void CreateCamera(Transform target, CameraConfig config)
@@ -239,6 +269,7 @@ namespace Tribulation.Core
 
         private void ClearRun()
         {
+            RuntimePrefabCatalog.ClearPools();
             if (runRoot != null)
             {
                 Destroy(runRoot.gameObject);
@@ -265,21 +296,21 @@ namespace Tribulation.Core
             }
 
             currentUpgradeOptions = System.Array.Empty<UpgradeOptionConfig>();
-            State = GameState.Running;
+            SetState(GameState.Running);
             Time.timeScale = 1f;
             ui?.ShowHud();
         }
 
         private void ShowAttributeAllocation()
         {
-            State = GameState.AttributeAllocation;
+            SetState(GameState.AttributeAllocation);
             Time.timeScale = 0f;
             ui?.ShowAttributeAllocation(Player);
         }
 
         private void ShowLevelUpSelection()
         {
-            State = GameState.LevelUpSelection;
+            SetState(GameState.LevelUpSelection);
             Time.timeScale = 0f;
             currentUpgradeOptions = PickUpgradeOptions();
             ui?.ShowLevelUpOptions(currentUpgradeOptions);
@@ -441,12 +472,26 @@ namespace Tribulation.Core
                 : weapon.EnhanceWeapon(option.weaponId, levels);
         }
 
+        private void SetState(GameState state)
+        {
+            if (State == GameState.Running && state != GameState.Running)
+            {
+                runningTargetFrameRate = Application.targetFrameRate;
+            }
+
+            State = state;
+            Application.targetFrameRate = state == GameState.Running
+                ? runningTargetFrameRate
+                : PausedTargetFrameRate;
+        }
+
         private void OnDestroy()
         {
             if (Instance == this)
             {
                 Instance = null;
                 Time.timeScale = 1f;
+                Application.targetFrameRate = runningTargetFrameRate;
             }
         }
     }

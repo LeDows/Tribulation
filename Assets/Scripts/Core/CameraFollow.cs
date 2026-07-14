@@ -40,7 +40,7 @@ namespace Tribulation.Core
 
         private void LateUpdate()
         {
-            if (Target == null)
+            if (!GameManager.IsSimulationRunning || Target == null)
             {
                 return;
             }

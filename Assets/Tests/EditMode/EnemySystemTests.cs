@@ -77,6 +77,76 @@ namespace Tribulation.Tests.EditMode
             }
         }
 
+        [Test]
+        public void DynamicProjectilePoolReusesReleasedInstance()
+        {
+            var catalog = RequiredType("Tribulation.Core.RuntimePrefabCatalog");
+            var projectilePrefab = Resources.Load<GameObject>("Prefabs/Projectile");
+            var parent = new GameObject("PoolTestRoot");
+
+            Assert.NotNull(projectilePrefab);
+
+            try
+            {
+                var first = (GameObject)catalog
+                    .GetMethod("InstantiatePooled", BindingFlags.Public | BindingFlags.Static)
+                    .Invoke(null, new object[] { projectilePrefab, parent.transform });
+
+                catalog.GetMethod("ReleasePooled", BindingFlags.Public | BindingFlags.Static)
+                    .Invoke(null, new object[] { first, projectilePrefab });
+
+                var second = (GameObject)catalog
+                    .GetMethod("InstantiatePooled", BindingFlags.Public | BindingFlags.Static)
+                    .Invoke(null, new object[] { projectilePrefab, parent.transform });
+
+                Assert.AreSame(first, second);
+            }
+            finally
+            {
+                catalog.GetMethod("ClearPools", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+                UnityEngine.Object.DestroyImmediate(parent);
+            }
+        }
+
+        [Test]
+        public void EnemyPrefabUsesKinematicBodyAndLightweightRendering()
+        {
+            var enemyPrefab = Resources.Load<GameObject>("Prefabs/Enemy");
+
+            Assert.NotNull(enemyPrefab);
+
+            var body = enemyPrefab.GetComponent<Rigidbody>();
+            var renderer = enemyPrefab.GetComponent<Renderer>();
+            var healthBarCanvas = enemyPrefab.GetComponentInChildren<Canvas>(true);
+
+            Assert.NotNull(body);
+            Assert.IsTrue(body.isKinematic);
+            Assert.IsFalse(body.useGravity);
+            Assert.AreEqual(
+                RigidbodyConstraints.FreezePositionY |
+                RigidbodyConstraints.FreezeRotationX |
+                RigidbodyConstraints.FreezeRotationZ,
+                body.constraints);
+            Assert.NotNull(renderer);
+            Assert.AreEqual(0, (int)renderer.shadowCastingMode);
+            Assert.AreEqual(2, (int)renderer.motionVectorGenerationMode);
+            Assert.NotNull(healthBarCanvas);
+            Assert.IsFalse(healthBarCanvas.enabled);
+        }
+
+        [Test]
+        public void SelectedMapProvidesBoundedPoolPrewarmConfiguration()
+        {
+            var configCenter = RequiredType("Tribulation.Config.ConfigCenter");
+            var map = configCenter.GetMethod("GetSelectedMap", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+            var spawn = GetField(map, "spawn");
+
+            Assert.Greater((int)GetField(spawn, "maxEnemies"), 0);
+            Assert.Greater((int)GetField(spawn, "projectilePoolSize"), 0);
+            Assert.Greater((int)GetField(spawn, "experienceOrbPoolSize"), 0);
+            Assert.Greater((int)GetField(spawn, "prewarmBatchSize"), 0);
+        }
+
         private static object FindById(Array items, string id)
         {
             foreach (var item in items)

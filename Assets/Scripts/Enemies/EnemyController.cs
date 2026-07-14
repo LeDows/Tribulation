@@ -304,7 +304,7 @@ namespace Tribulation.Enemies
                 return false;
             }
 
-            var projectileObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Projectile, manager.RunRoot);
+            var projectileObject = RuntimePrefabCatalog.InstantiatePooled(RuntimePrefabCatalog.Projectile, manager.RunRoot);
             if (projectileObject == null)
             {
                 return false;
@@ -315,13 +315,13 @@ namespace Tribulation.Enemies
             projectileObject.transform.localScale = Vector3.one * ProjectileScale;
             if (projectileObject.TryGetComponent<Renderer>(out var renderer))
             {
-                renderer.material.color = ProjectileColor;
+                RuntimePrefabCatalog.SetRendererColor(renderer, ProjectileColor);
             }
 
             var projectile = projectileObject.GetComponent<Projectile>();
             if (projectile == null)
             {
-                Destroy(projectileObject);
+                RuntimePrefabCatalog.ReleasePooled(projectileObject, RuntimePrefabCatalog.Projectile);
                 return false;
             }
 

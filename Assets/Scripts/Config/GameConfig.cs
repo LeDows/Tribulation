@@ -509,6 +509,9 @@ namespace Tribulation.Config
         public float pressureRampSeconds = 180f;
         public float radius = 16f;
         public int maxEnemies = 90;
+        public int projectilePoolSize = 48;
+        public int experienceOrbPoolSize = 32;
+        public int prewarmBatchSize = 4;
 
         public string[] GetEnemyIds()
         {

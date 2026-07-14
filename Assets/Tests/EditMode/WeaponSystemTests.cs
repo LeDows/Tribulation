@@ -68,7 +68,7 @@ namespace Tribulation.Tests.EditMode
             createdObjects.Add(playerObject);
 
             playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
 
             Assert.AreEqual(1, GetProperty(weapon, "EquippedCount"));
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "fireball"));
@@ -89,7 +89,7 @@ namespace Tribulation.Tests.EditMode
             createdObjects.Add(playerObject);
 
             playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "fireball"));
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "thunder_call"));
 
@@ -118,7 +118,7 @@ namespace Tribulation.Tests.EditMode
             createdObjects.Add(playerObject);
 
             playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
 
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "fireball"));
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "fireball"));
@@ -133,7 +133,7 @@ namespace Tribulation.Tests.EditMode
             createdObjects.Add(playerObject);
 
             playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "fireball"));
             Assert.IsTrue((bool)Invoke(weapon, "EquipWeapon", "thunder_call"));
 
@@ -149,7 +149,7 @@ namespace Tribulation.Tests.EditMode
             createdObjects.Add(playerObject);
 
             playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
             var option = GetUpgrade("quickened_blade");
             var applications = 0;
 
@@ -181,7 +181,7 @@ namespace Tribulation.Tests.EditMode
             var playerObject = new GameObject("ProjectileCountUpgradeTestPlayer");
             createdObjects.Add(playerObject);
             var stats = playerObject.AddComponent(RequiredType("Tribulation.Player.PlayerStats"));
-            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            var weapon = AddConfiguredAutoWeapon(playerObject);
             Assert.IsTrue((bool)Invoke(weapon, "CanApplyUpgrade", option));
 
             var managerObject = new GameObject("ProjectileCountUpgradeTestManager");
@@ -361,6 +361,13 @@ namespace Tribulation.Tests.EditMode
             return RequiredType("Tribulation.Config.ConfigCenter")
                 .GetProperty("Weapon", BindingFlags.Public | BindingFlags.Static)
                 .GetValue(null);
+        }
+
+        private static Component AddConfiguredAutoWeapon(GameObject playerObject)
+        {
+            var weapon = playerObject.AddComponent(RequiredType("Tribulation.Combat.AutoWeapon"));
+            Invoke(weapon, "ApplyConfig", GetWeaponCatalog());
+            return weapon;
         }
 
         private static object GetUpgrade(string id)

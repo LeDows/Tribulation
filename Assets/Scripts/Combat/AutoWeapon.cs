@@ -20,6 +20,8 @@ namespace Tribulation.Combat
         public Color ProjectileColor = new(0.8f, 0.95f, 1f, 1f);
 
         private readonly List<EquippedWeaponState> equippedWeapons = new();
+        private readonly List<EnemyHealth> selectedTargets = new();
+        private readonly List<EnemyHealth> targetCandidates = new();
         private WeaponCatalogConfig catalog = WeaponCatalogConfig.CreateDefault();
         private PlayerStats stats;
         private float flatDamageBonus;
@@ -64,6 +66,11 @@ namespace Tribulation.Combat
 
         private void Update()
         {
+            if (!GameManager.IsSimulationRunning)
+            {
+                return;
+            }
+
             ApplyPassiveTick(Time.deltaTime);
 
             foreach (var weapon in equippedWeapons)
@@ -78,7 +85,6 @@ namespace Tribulation.Combat
                 weapon.Cooldown = GetFireInterval(weapon);
             }
 
-            RefreshLegacyFields();
         }
 
         public bool CanApplyUpgrade(UpgradeOptionConfig option)
@@ -324,7 +330,7 @@ namespace Tribulation.Combat
                 return;
             }
 
-            var state = new EquippedWeaponState(weapon);
+            var state = new EquippedWeaponState(this, weapon);
             RollAffixes(state);
             equippedWeapons.Add(state);
 
@@ -440,7 +446,7 @@ namespace Tribulation.Combat
 
         private void SpawnProjectile(EquippedWeaponState weapon, Vector3 direction)
         {
-            var projectileObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Projectile, GameManager.Instance.RunRoot);
+            var projectileObject = RuntimePrefabCatalog.InstantiatePooled(RuntimePrefabCatalog.Projectile, GameManager.Instance.RunRoot);
             if (projectileObject == null)
             {
                 return;
@@ -451,7 +457,7 @@ namespace Tribulation.Combat
             projectileObject.transform.localScale = Vector3.one * GetProjectileScale(weapon);
             if (projectileObject.TryGetComponent<Renderer>(out var renderer))
             {
-                renderer.material.color = weapon.Config.projectileColor;
+                RuntimePrefabCatalog.SetRendererColor(renderer, weapon.Config.projectileColor);
             }
 
             var projectile = projectileObject.GetComponent<Projectile>();
@@ -463,7 +469,7 @@ namespace Tribulation.Combat
                 Mathf.Max(0.05f, weapon.Config.projectileLifetime),
                 Mathf.Max(1, weapon.Config.maxProjectileHits),
                 weapon.Config.areaOnImpact ? GetHitRadius(weapon) : 0f,
-                enemy => DamageEnemy(enemy, weapon, hitDamage));
+                weapon.ProjectileHitHandler);
         }
 
         private void DamageCone(EquippedWeaponState weapon)
@@ -481,9 +487,13 @@ namespace Tribulation.Combat
                 return;
             }
 
-            var enemies = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
-            foreach (var enemy in enemies)
+            var enemies = EnemyHealth.ActiveEnemies;
+            var range = GetRange(weapon);
+            var rangeSqr = range * range;
+            var normalizedForward = forward.normalized;
+            for (var i = enemies.Count - 1; i >= 0; i--)
             {
+                var enemy = enemies[i];
                 if (enemy == null)
                 {
                     continue;
@@ -491,12 +501,12 @@ namespace Tribulation.Combat
 
                 var toEnemy = enemy.transform.position - transform.position;
                 toEnemy.y = 0f;
-                if (toEnemy.sqrMagnitude > GetRange(weapon) * GetRange(weapon))
+                if (toEnemy.sqrMagnitude > rangeSqr)
                 {
                     continue;
                 }
 
-                var angle = Vector3.Angle(forward.normalized, toEnemy.normalized);
+                var angle = Vector3.Angle(normalizedForward, toEnemy.normalized);
                 if (angle <= weapon.Config.coneAngle * 0.5f)
                 {
                     DamageEnemy(enemy, weapon);
@@ -531,10 +541,11 @@ namespace Tribulation.Combat
 
         private void DamageArea(Vector3 center, float radius, EquippedWeaponState weapon)
         {
-            var enemies = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+            var enemies = EnemyHealth.ActiveEnemies;
             var radiusSqr = radius * radius;
-            foreach (var enemy in enemies)
+            for (var i = enemies.Count - 1; i >= 0; i--)
             {
+                var enemy = enemies[i];
                 if (enemy == null)
                 {
                     continue;
@@ -595,36 +606,38 @@ namespace Tribulation.Combat
 
         private List<EnemyHealth> FindTargets(WeaponTargetMode targetMode, int count, float range)
         {
-            var selected = new List<EnemyHealth>();
-            var candidates = new List<EnemyHealth>();
-            var enemies = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+            selectedTargets.Clear();
+            targetCandidates.Clear();
+
+            var enemies = EnemyHealth.ActiveEnemies;
             var rangeSqr = range * range;
 
-            foreach (var enemy in enemies)
+            for (var i = 0; i < enemies.Count; i++)
             {
+                var enemy = enemies[i];
                 if (enemy == null || (enemy.transform.position - transform.position).sqrMagnitude > rangeSqr)
                 {
                     continue;
                 }
 
-                candidates.Add(enemy);
+                targetCandidates.Add(enemy);
             }
 
-            count = Mathf.Min(Mathf.Max(1, count), candidates.Count);
-            while (selected.Count < count && candidates.Count > 0)
+            count = Mathf.Min(Mathf.Max(1, count), targetCandidates.Count);
+            while (selectedTargets.Count < count && targetCandidates.Count > 0)
             {
                 var index = targetMode switch
                 {
-                    WeaponTargetMode.Random => Random.Range(0, candidates.Count),
-                    WeaponTargetMode.Strongest => FindStrongestIndex(candidates),
-                    _ => FindNearestIndex(candidates)
+                    WeaponTargetMode.Random => Random.Range(0, targetCandidates.Count),
+                    WeaponTargetMode.Strongest => FindStrongestIndex(targetCandidates),
+                    _ => FindNearestIndex(targetCandidates)
                 };
 
-                selected.Add(candidates[index]);
-                candidates.RemoveAt(index);
+                selectedTargets.Add(targetCandidates[index]);
+                targetCandidates.RemoveAt(index);
             }
 
-            return selected;
+            return selectedTargets;
         }
 
         private int FindNearestIndex(List<EnemyHealth> enemies)
@@ -940,15 +953,25 @@ namespace Tribulation.Combat
 
         private sealed class EquippedWeaponState
         {
+            private readonly AutoWeapon owner;
+
             public readonly WeaponConfig Config;
             public readonly List<string> AffixIds = new();
+            public readonly System.Action<EnemyHealth, float> ProjectileHitHandler;
             public int EnhancementLevel;
             public float Cooldown;
 
-            public EquippedWeaponState(WeaponConfig config)
+            public EquippedWeaponState(AutoWeapon owner, WeaponConfig config)
             {
+                this.owner = owner;
                 Config = config;
+                ProjectileHitHandler = HandleProjectileHit;
                 Cooldown = Random.Range(0f, Mathf.Max(0.05f, config.fireInterval));
+            }
+
+            private void HandleProjectileHit(EnemyHealth enemy, float damage)
+            {
+                owner.DamageEnemy(enemy, this, damage);
             }
         }
     }

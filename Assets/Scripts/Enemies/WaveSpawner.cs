@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Tribulation.Core;
 using Tribulation.Config;
 using UnityEngine;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace Tribulation.Enemies
@@ -15,9 +14,13 @@ namespace Tribulation.Enemies
         public float PressureRampSeconds = 180f;
         public float SpawnRadius = 16f;
         public int MaxEnemies = 90;
+        public int ProjectilePoolSize = 48;
+        public int ExperienceOrbPoolSize = 32;
+        public int PrewarmBatchSize = 4;
 
         private float timer;
         private EnemyConfig[] enemyPool = Array.Empty<EnemyConfig>();
+        private int prewarmStage;
 
         public void Configure(SpawnConfig config)
         {
@@ -32,14 +35,21 @@ namespace Tribulation.Enemies
             PressureRampSeconds = config.pressureRampSeconds;
             SpawnRadius = config.radius;
             MaxEnemies = config.maxEnemies;
+            ProjectilePoolSize = config.projectilePoolSize;
+            ExperienceOrbPoolSize = config.experienceOrbPoolSize;
+            PrewarmBatchSize = config.prewarmBatchSize;
+            prewarmStage = 0;
         }
 
         private void Update()
         {
-            if (GameManager.Instance.Player == null || GameManager.Instance.IsGameOver)
+            var manager = GameManager.Instance;
+            if (manager == null || manager.State != GameState.Running || manager.Player == null)
             {
                 return;
             }
+
+            PrewarmPools(manager.RunRoot);
 
             timer -= Time.deltaTime;
             if (timer > 0f)
@@ -47,35 +57,76 @@ namespace Tribulation.Enemies
                 return;
             }
 
-            var enemyCount = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None).Length;
-            if (enemyCount < MaxEnemies)
+            if (EnemyHealth.ActiveCount < MaxEnemies)
             {
-                SpawnEnemy();
+                SpawnEnemy(manager);
             }
 
-            var pressure = Mathf.Clamp01(GameManager.Instance.RunTime / Mathf.Max(0.01f, PressureRampSeconds));
+            var pressure = Mathf.Clamp01(manager.RunTime / Mathf.Max(0.01f, PressureRampSeconds));
             timer = Mathf.Lerp(SpawnInterval, MinimumSpawnInterval, pressure);
         }
 
-        private void SpawnEnemy()
+        private void PrewarmPools(Transform parent)
+        {
+            switch (prewarmStage)
+            {
+                case 0:
+                    if (RuntimePrefabCatalog.PrewarmStep(
+                        RuntimePrefabCatalog.Enemy,
+                        parent,
+                        Mathf.Max(0, MaxEnemies),
+                        PrewarmBatchSize))
+                    {
+                        prewarmStage++;
+                    }
+                    break;
+                case 1:
+                    if (RuntimePrefabCatalog.PrewarmStep(
+                        RuntimePrefabCatalog.Projectile,
+                        parent,
+                        Mathf.Max(0, ProjectilePoolSize),
+                        PrewarmBatchSize))
+                    {
+                        prewarmStage++;
+                    }
+                    break;
+                case 2:
+                    if (RuntimePrefabCatalog.PrewarmStep(
+                        RuntimePrefabCatalog.ExperienceOrb,
+                        parent,
+                        Mathf.Max(0, ExperienceOrbPoolSize),
+                        PrewarmBatchSize))
+                    {
+                        prewarmStage++;
+                    }
+                    break;
+            }
+        }
+
+        private void SpawnEnemy(GameManager manager)
         {
             var enemy = PickEnemy();
-            if (enemy == null)
+            if (enemy == null || manager == null || manager.Player == null)
             {
                 return;
             }
 
-            var playerPosition = GameManager.Instance.Player.transform.position;
+            var playerPosition = manager.Player.transform.position;
             var angle = Random.Range(0f, Mathf.PI * 2f);
             var position = playerPosition + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * SpawnRadius;
             position.y = 1f;
 
-            var enemyObject = RuntimePrefabCatalog.Instantiate(RuntimePrefabCatalog.Enemy, GameManager.Instance.RunRoot);
+            var enemyObject = RuntimePrefabCatalog.InstantiatePooled(RuntimePrefabCatalog.Enemy, manager.RunRoot);
+            if (enemyObject == null)
+            {
+                return;
+            }
+
             enemyObject.name = ConfigCenter.Text(enemy.displayNameKey);
             enemyObject.transform.position = position;
             if (enemyObject.TryGetComponent<Renderer>(out var renderer))
             {
-                renderer.material.color = enemy.color;
+                RuntimePrefabCatalog.SetRendererColor(renderer, enemy.color);
             }
 
             if (enemyObject.TryGetComponent<CapsuleCollider>(out var collider))
@@ -84,7 +135,7 @@ namespace Tribulation.Enemies
             }
 
             var health = enemyObject.GetComponent<EnemyHealth>();
-            var player = GameManager.Instance.Player;
+            var player = manager.Player;
             var eliteChance = Mathf.Clamp01(enemy.eliteChance + (player != null ? player.RareRewardChanceBonus : 0f));
             var experience = Random.value < eliteChance ? enemy.eliteExperienceValue : enemy.experienceValue;
             health.Configure(enemy.maxHealth, experience);

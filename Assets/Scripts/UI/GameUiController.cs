@@ -10,6 +10,8 @@ namespace Tribulation.UI
 {
     public sealed class GameUiController : MonoBehaviour
     {
+        private const float HudRefreshInterval = 0.1f;
+
         private GameObject mainMenuPanel;
         private GameObject hudPanel;
         private GameObject resultPanel;
@@ -41,6 +43,9 @@ namespace Tribulation.UI
         };
         private readonly Button[] attributeButtons = new Button[7];
         private readonly Text[] attributeValueTexts = new Text[7];
+        private float nextHudRefreshTime;
+        private PlayerStats cachedHudPlayer;
+        private AutoWeapon cachedHudWeapon;
 
         private void Awake()
         {
@@ -103,6 +108,12 @@ namespace Tribulation.UI
                 return;
             }
 
+            if (Time.unscaledTime < nextHudRefreshTime)
+            {
+                return;
+            }
+
+            nextHudRefreshTime = Time.unscaledTime + HudRefreshInterval;
             RefreshHud(manager);
         }
 
@@ -122,6 +133,7 @@ namespace Tribulation.UI
             SetPanel(resultPanel, false);
             SetPanel(levelUpPanel, false);
             SetPanel(attributePanel, false);
+            nextHudRefreshTime = Time.unscaledTime + HudRefreshInterval;
             RefreshHud(GameManager.Instance);
         }
 
@@ -192,12 +204,18 @@ namespace Tribulation.UI
                 return;
             }
 
+            if (cachedHudPlayer != player)
+            {
+                cachedHudPlayer = player;
+                cachedHudWeapon = player.GetComponent<AutoWeapon>();
+            }
+
             SetText(levelText, player.RealmLayerDisplay);
             SetText(experienceText, $"{player.Experience}/{player.ExperienceToNextLevel}");
             SetText(healthText, $"{Mathf.CeilToInt(player.Health)}/{Mathf.CeilToInt(player.MaxHealth)}");
             SetText(killsText, manager.KillCount.ToString());
             SetText(timeText, FormatTime(manager.RunTime));
-            SetText(weaponStatsText, FormatWeaponStats(player.GetComponent<AutoWeapon>()));
+            SetText(weaponStatsText, FormatWeaponStats(cachedHudWeapon));
             SetText(lastUpgradeText, FormatLastUpgrade(manager));
         }
 
@@ -327,7 +345,7 @@ namespace Tribulation.UI
 
         private static void SetText(Text text, string value)
         {
-            if (text != null)
+            if (text != null && text.text != value)
             {
                 text.text = value;
             }
